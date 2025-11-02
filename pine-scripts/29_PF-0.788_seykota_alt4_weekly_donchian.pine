@@ -1,0 +1,167 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © danieltuckerrust
+// ALTERNATIVE 4: Weekly Timeframe Donchian
+// THEORY: Higher timeframe lookbacks capture major trends and avoid daily noise.
+// By anchoring breakout logic on weekly bars (26-week entry, 13-week exit), we catch only
+// the most significant trends. Execution still happens on the chart timeframe (e.g., daily).
+// Trade-off: Fewer, higher-quality trades with less chop; may miss medium-term trends.
+
+//@version=6
+strategy("Seykota Alt 4: Weekly Donchian v1.0",
+     overlay=true,
+     initial_capital=100000,
+     commission_type=strategy.commission.percent, commission_value=0.005,
+     slippage=2,
+     default_qty_type=strategy.fixed, default_qty_value=0,
+     pyramiding=10,
+     max_bars_back=5000)
+
+//================ Inputs
+allowLong   = input.bool(true,  "Allow LONGs?")
+allowShort  = input.bool(true,  "Allow SHORTs?")
+
+// CHANGED: Weekly Donchian parameters
+wEntryLen   = input.int(26,     "Weekly ENTRY lookback (weeks)",      minval=8)
+wExitLen    = input.int(13,     "Weekly EXIT lookback (weeks)",       minval=5)
+nLen        = input.int(20,     "N = ATR length (chart TF)",          minval=5)
+stopN       = input.float(2.0,  "Initial stop (in N)",                minval=0.5, step=0.25)
+addStepN    = input.float(0.5,  "Add every X * N",                    minval=0.25, step=0.25)
+maxUnits    = input.int(4,      "Max units (incl. initial)",          minval=1, maxval=10)
+riskPct     = input.float(1.0,  "Risk % of equity PER UNIT",          minval=0.1, maxval=5, step=0.1)
+
+useMarket   = input.bool(false, "Use market regime filter?")
+marketSym   = input.symbol("SPY", "Market symbol for regime (if used)")
+marketTF    = input.timeframe("D", "Regime timeframe (if used)")
+marketLen   = input.int(200,    "Market MA length (if used)",         minval=50)
+
+minVol      = input.int(0,      "Min 20-bar avg volume (chart TF)",   minval=0)
+showSignals = input.bool(true,  "Plot signals & stops?")
+plotDon     = input.bool(true,  "Plot weekly Donchian bands?")
+
+// Date-range filter
+fromDate = input.time(defval=timestamp("2022-01-01T00:00:00"), title="Backtest FROM (yyyy-mm-dd)", confirm=true)
+toDate   = input.time(defval=timestamp("2099-12-31T23:59:59"), title="Backtest TO (yyyy-mm-dd)",   confirm=true)
+flatAtFrom = input.bool(true, "Force FLAT at range start?")
+isRangeStart = (time[1] < fromDate) and (time >= fromDate)
+if flatAtFrom and isRangeStart and strategy.position_size != 0
+    strategy.close_all(comment="Flat at FROM")
+
+//================ Helpers
+sharesForUnit(_equity, _Nentry) =>
+    riskDollars   = _equity * (riskPct/100.0)
+    perShareRisk  = math.max(stopN * _Nentry, syminfo.mintick)
+    math.max(1, math.floor(riskDollars / perShareRisk))
+
+inRange = (time >= fromDate) and (time <= toDate)
+
+//================ Core calcs (chart timeframe)
+N     = ta.atr(nLen)
+volMA = ta.sma(volume, 20)
+liqOK = volMA >= minVol
+
+// CHANGED: Weekly Donchian levels using request.security
+// Use [1] offset to avoid lookahead bias
+wHiPrev = request.security(syminfo.tickerid, "W", ta.highest(high, wEntryLen)[1], lookahead=barmerge.lookahead_off)
+wLoPrev = request.security(syminfo.tickerid, "W", ta.lowest(low,  wEntryLen)[1], lookahead=barmerge.lookahead_off)
+
+wExitHiPrev = request.security(syminfo.tickerid, "W", ta.highest(high, wExitLen)[1], lookahead=barmerge.lookahead_off)
+wExitLoPrev = request.security(syminfo.tickerid, "W", ta.lowest(low,  wExitLen)[1], lookahead=barmerge.lookahead_off)
+
+// Market regime (optional)
+mClose = request.security(marketSym, marketTF, close)
+mMA    = request.security(marketSym, marketTF, ta.sma(close, marketLen))
+longRegOK  = not useMarket or (mClose > mMA)
+shortRegOK = not useMarket or (mClose < mMA)
+
+//================ Signals (weekly breakout executed on chart TF)
+longBreak  = allowLong  and liqOK and longRegOK  and inRange and (close > wHiPrev)
+shortBreak = allowShort and liqOK and shortRegOK and inRange and (close < wLoPrev)
+
+//================ Position state
+var float N_entry       = na
+var float lastAddLong   = na
+var float lastAddShort  = na
+var int   units         = 0
+
+inPos     = strategy.position_size != 0
+inLong    = strategy.position_size > 0
+inShort   = strategy.position_size < 0
+
+if not inPos
+    units        := 0
+    lastAddLong  := na
+    lastAddShort := na
+    N_entry      := na
+
+//================ Entries
+if not inPos and longBreak
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       := 1
+    lastAddLong := close
+
+if not inPos and shortBreak
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        := 1
+    lastAddShort := close
+
+//================ Add-ons (on chart timeframe, every 0.5N)
+canAddLong  = inRange and inLong  and units < maxUnits and high >= nz(lastAddLong)  + addStepN * N_entry
+canAddShort = inRange and inShort and units < maxUnits and low  <= nz(lastAddShort) - addStepN * N_entry
+
+if canAddLong
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       += 1
+    lastAddLong := close
+
+if canAddShort
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        += 1
+    lastAddShort := close
+
+//================ Exits (weekly Donchian + ATR stop)
+var float stopL = na
+var float stopS = na
+
+if inRange and inLong
+    initStopL = strategy.position_avg_price - stopN * N_entry
+    // Use weekly exit level OR initial stop, whichever is tighter
+    exitL     = math.round_to_mintick(math.max(initStopL, wExitLoPrev))
+    stopL     := exitL
+    strategy.exit("L-EXIT", from_entry="L", stop=stopL)
+else
+    stopL := na
+
+if inRange and inShort
+    initStopS = strategy.position_avg_price + stopN * N_entry
+    // Use weekly exit level OR initial stop, whichever is tighter
+    exitS     = math.round_to_mintick(math.min(initStopS, wExitHiPrev))
+    stopS     := exitS
+    strategy.exit("S-EXIT", from_entry="S", stop=stopS)
+else
+    stopS := na
+
+//================ Plots
+plot(plotDon ? wHiPrev : na, "Weekly High", color=color.new(color.blue, 30), linewidth=2, style=plot.style_stepline)
+plot(plotDon ? wLoPrev : na, "Weekly Low",  color=color.new(color.blue, 30), linewidth=2, style=plot.style_stepline)
+
+plot(plotDon ? wExitHiPrev : na, "Weekly Exit High", color=color.new(color.red, 50), linewidth=1, style=plot.style_circles)
+plot(plotDon ? wExitLoPrev : na, "Weekly Exit Low",  color=color.new(color.red, 50), linewidth=1, style=plot.style_circles)
+
+plotshape(showSignals and longBreak,  title="Long Breakout",  style=shape.triangleup,   location=location.belowbar, size=size.small, color=color.new(color.green, 0), text="W↑")
+plotshape(showSignals and shortBreak, title="Short Breakout", style=shape.triangledown, location=location.abovebar, size=size.small, color=color.new(color.red,   0), text="W↓")
+
+plot(showSignals and inLong  ? stopL : na, "Long Stop",  color=color.new(color.red, 0), style=plot.style_linebr, linewidth=2)
+plot(showSignals and inShort ? stopS : na, "Short Stop", color=color.new(color.red, 0), style=plot.style_linebr, linewidth=2)
+
+// Info label
+var label infoLabel = na
+if barstate.islast and showSignals
+    labelText = "Weekly Donchian\nEntry: " + str.tostring(wEntryLen) + "W\nExit: " + str.tostring(wExitLen) + "W"
+    label.delete(infoLabel)
+    infoLabel := label.new(bar_index, high, labelText, style=label.style_label_down, color=color.new(color.blue, 80), textcolor=color.white, size=size.small)

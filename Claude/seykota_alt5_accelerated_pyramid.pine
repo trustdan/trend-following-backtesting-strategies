@@ -1,0 +1,227 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © danieltuckerrust
+// ALTERNATIVE 5: Accelerated Pyramid System
+// THEORY: As a trend proves itself by giving you profits, become MORE aggressive, not less.
+// Each successful add-on increases the size of the next add-on. This maximizes exposure to 
+// strong trends. Seykota: "The elements of good trading are: (1) cutting losses, (2) cutting 
+// losses, and (3) cutting losses. If you can follow these three rules, you may have a chance."
+// This version adds: (4) maximizing winners.
+
+//@version=6
+strategy("Seykota Alt 5: Accelerated Pyramid v1.0",
+     overlay=true,
+     initial_capital=100000,
+     commission_type=strategy.commission.percent, commission_value=0.005,
+     default_qty_type=strategy.fixed, default_qty_value=0,
+     pyramiding=10,
+     max_bars_back=5000)
+
+//================ Inputs
+allowLong   = input.bool(true,  "Allow LONGs?")
+allowShort  = input.bool(true,  "Allow SHORTs?")
+
+entryLen    = input.int(55,     "Donchian ENTRY lookback",    minval=10)
+exitLen     = input.int(10,     "Donchian EXIT lookback",     minval=5)
+
+nLen        = input.int(20,     "N = ATR length",             minval=5)
+stopN       = input.float(2.0,  "Initial stop (in N)",        minval=0.5, step=0.25)
+
+// Accelerated pyramiding parameters
+addStepN    = input.float(0.5,  "FIRST add at X * N",         minval=0.25, step=0.25)
+accelFactor = input.float(1.3,  "Acceleration factor",        minval=1.0, maxval=2.0, step=0.1)
+maxUnits    = input.int(6,      "Max units",                  minval=1, maxval=10)
+
+// Risk increases with each unit
+baseRiskPct = input.float(0.8,  "Base risk % (unit 1)",       minval=0.1, maxval=3, step=0.1)
+riskIncr    = input.float(0.2,  "Risk increase per unit",     minval=0, maxval=1, step=0.05)
+
+// Profit-based sizing boost
+useProfitBoost = input.bool(true, "Use profit-based sizing boost?")
+profitThresh   = input.float(10,  "Profit % threshold for boost", minval=5, maxval=50, step=5)
+profitBoostMult= input.float(1.5, "Profit boost multiplier",  minval=1.0, maxval=3.0, step=0.1)
+
+useMarket   = input.bool(false, "Use market regime filter?")
+marketSym   = input.symbol("SPY", "Market symbol")
+marketTF    = input.timeframe("D", "Regime timeframe")
+marketLen   = input.int(200,    "Market MA length",           minval=50)
+
+minVol      = input.int(0,      "Min 20-bar avg volume",      minval=0)
+showSignals = input.bool(true,  "Plot signals & stops?")
+plotDon     = input.bool(true,  "Plot Donchian bands?")
+
+fromDate = input.time(defval=timestamp("2022-01-01T00:00:00"), title="Backtest FROM")
+toDate   = input.time(defval=timestamp("2099-12-31T23:59:59"), title="Backtest TO")
+
+//================ Helpers
+calcRiskPct(_unit) =>
+    baseRiskPct + ((_unit - 1) * riskIncr)
+
+sharesForUnit(_equity, _Nentry, _unit, _profitPct) =>
+    riskPctForUnit = calcRiskPct(_unit)
+    
+    // Apply profit boost if enabled and threshold met
+    finalRiskPct = riskPctForUnit
+    if useProfitBoost and _profitPct >= profitThresh
+        finalRiskPct := riskPctForUnit * profitBoostMult
+    
+    riskDollars   = _equity * (finalRiskPct/100.0)
+    perShareRisk  = math.max(stopN * _Nentry, syminfo.mintick)
+    math.max(1, math.floor(riskDollars / perShareRisk))
+
+inRange = (time >= fromDate) and (time <= toDate)
+flatAtFrom = input.bool(true, "Force FLAT at range start?")
+isRangeStart = (time[1] < fromDate) and (time >= fromDate)
+
+if flatAtFrom and isRangeStart and strategy.position_size != 0
+    strategy.close_all(comment="Flat at FROM")
+
+//================ Core calcs
+N        = ta.atr(nLen)
+volMA    = ta.sma(volume, 20)
+liqOK    = volMA >= minVol
+
+donHi    = ta.highest(high, entryLen)
+donLo    = ta.lowest(low,  entryLen)
+donHiPrev= donHi[1]
+donLoPrev= donLo[1]
+
+exitHiPrev = ta.highest(high, exitLen)[1]
+exitLoPrev = ta.lowest(low,  exitLen)[1]
+
+// Market regime
+mClose = request.security(marketSym, marketTF, close)
+mMA    = request.security(marketSym, marketTF, ta.sma(close, marketLen))
+longRegOK  = not useMarket or (mClose > mMA)
+shortRegOK = not useMarket or (mClose < mMA)
+
+//================ Signals
+longBreak  = allowLong  and liqOK and longRegOK  and (close > donHiPrev)
+shortBreak = allowShort and liqOK and shortRegOK and (close < donLoPrev)
+
+//================ Position state
+var float N_entry       = na
+var float lastAddLong   = na
+var float lastAddShort  = na
+var int   units         = 0
+var float entryEquity   = na
+
+inPos     = strategy.position_size != 0
+inLong    = strategy.position_size > 0
+inShort   = strategy.position_size < 0
+
+// Calculate current profit %
+profitPct = 0.0
+if inPos and entryEquity > 0
+    profitPct := ((strategy.equity - entryEquity) / entryEquity) * 100
+
+if not inPos
+    units        := 0
+    lastAddLong  := na
+    lastAddShort := na
+    N_entry      := na
+    entryEquity  := na
+
+//================ Calculate accelerated add-on distance
+// Distance accelerates: 0.5N, 0.65N, 0.845N, 1.1N, 1.43N, etc.
+calcAddDistance(_unit) =>
+    addStepN * math.pow(accelFactor, _unit - 1)
+
+//================ Entries
+if inRange and not inPos and longBreak
+    N_entry := N
+    entryEquity := strategy.equity
+    float sh = sharesForUnit(strategy.equity, N_entry, 1, 0)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       := 1
+    lastAddLong := close
+
+if inRange and not inPos and shortBreak
+    N_entry := N
+    entryEquity := strategy.equity
+    float sh = sharesForUnit(strategy.equity, N_entry, 1, 0)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        := 1
+    lastAddShort := close
+
+//================ Add-ons (accelerated distances)
+nextAddDist = calcAddDistance(units)
+
+canAddLong  = inRange and inLong  and units < maxUnits and close >= nz(lastAddLong)  + nextAddDist * N_entry
+canAddShort = inRange and inShort and units < maxUnits and close <= nz(lastAddShort) - nextAddDist * N_entry
+
+if canAddLong
+    float sh = sharesForUnit(strategy.equity, N_entry, units + 1, profitPct)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       += 1
+    lastAddLong := close
+
+if canAddShort
+    float sh = sharesForUnit(strategy.equity, N_entry, units + 1, profitPct)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        += 1
+    lastAddShort := close
+
+//================ Exits
+var float stopL = na
+var float stopS = na
+
+if inRange and inLong
+    initStopL = strategy.position_avg_price - stopN * N_entry
+    stopL     := math.max(initStopL, exitLoPrev)
+    strategy.exit("L-EXIT", from_entry="L", stop=stopL)
+else
+    stopL := na
+
+if inRange and inShort
+    initStopS = strategy.position_avg_price + stopN * N_entry
+    stopS     := math.min(initStopS, exitHiPrev)
+    strategy.exit("S-EXIT", from_entry="S", stop=stopS)
+else
+    stopS := na
+
+//================ Plots
+float dHiPlot = plotDon ? donHi : na
+float dLoPlot = plotDon ? donLo : na
+plot(dHiPlot, "Donchian High", color=color.new(color.blue, 40))
+plot(dLoPlot, "Donchian Low",  color=color.new(color.blue, 40))
+
+plotshape(showSignals and longBreak,  title="Long",  style=shape.triangleup,   location=location.belowbar, size=size.tiny, color=color.green)
+plotshape(showSignals and shortBreak, title="Short", style=shape.triangledown, location=location.abovebar, size=size.tiny, color=color.red)
+
+plot(showSignals and inLong  ? stopL : na, "Long Stop",  color=color.red, style=plot.style_linebr)
+plot(showSignals and inShort ? stopS : na, "Short Stop", color=color.red, style=plot.style_linebr)
+
+// Show next add level
+nextAddLevelLong  = inLong  ? nz(lastAddLong)  + nextAddDist * N_entry : na
+nextAddLevelShort = inShort ? nz(lastAddShort) - nextAddDist * N_entry : na
+
+plot(showSignals and inLong  and units < maxUnits ? nextAddLevelLong  : na, "Next Add (L)", color=color.new(color.green, 50), style=plot.style_circles)
+plot(showSignals and inShort and units < maxUnits ? nextAddLevelShort : na, "Next Add (S)", color=color.new(color.red, 50), style=plot.style_circles)
+
+// Info table
+var table infoTable = table.new(position.top_right, 2, 6, border_width=1)
+if barstate.islast and showSignals
+    table.cell(infoTable, 0, 0, "Units:", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 0, str.tostring(units) + " / " + str.tostring(maxUnits), text_color=color.white, bgcolor=color.gray)
+    
+    table.cell(infoTable, 0, 1, "Profit %:", text_color=color.white, bgcolor=color.gray)
+    profitColor = profitPct > 0 ? color.green : profitPct < 0 ? color.red : color.gray
+    table.cell(infoTable, 1, 1, str.tostring(profitPct, "#.##") + "%", text_color=color.white, bgcolor=profitColor)
+    
+    table.cell(infoTable, 0, 2, "Next Add Dist:", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 2, str.tostring(nextAddDist, "#.##") + "N", text_color=color.white, bgcolor=color.gray)
+    
+    table.cell(infoTable, 0, 3, "Current Risk %:", text_color=color.white, bgcolor=color.gray)
+    currentRisk = units > 0 ? calcRiskPct(units) : baseRiskPct
+    table.cell(infoTable, 1, 3, str.tostring(currentRisk, "#.##") + "%", text_color=color.white, bgcolor=color.gray)
+    
+    table.cell(infoTable, 0, 4, "Next Risk %:", text_color=color.white, bgcolor=color.gray)
+    nextRisk = calcRiskPct(units + 1)
+    if useProfitBoost and profitPct >= profitThresh
+        nextRisk := nextRisk * profitBoostMult
+    table.cell(infoTable, 1, 4, str.tostring(nextRisk, "#.##") + "%", text_color=color.white, bgcolor=color.gray)
+    
+    table.cell(infoTable, 0, 5, "Boost Active:", text_color=color.white, bgcolor=color.gray)
+    boostActive = useProfitBoost and profitPct >= profitThresh
+    boostColor = boostActive ? color.green : color.gray
+    table.cell(infoTable, 1, 5, boostActive ? "YES" : "NO", text_color=color.white, bgcolor=boostColor)

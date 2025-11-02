@@ -1,0 +1,271 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © danieltuckerrust
+// ALTERNATIVE 18: Regime-Dependent Risk
+// THEORY: Increase position size in favorable regimes (macro tailwind), decrease in unfavorable.
+// The baseline uses fixed 1% risk per unit regardless of market conditions. But not all environments
+// are equal: trend-following strategies perform better in trending macro regimes. This alternative
+// scales risk based on market regime (e.g., SPY > 200-day MA = favorable = 1.5% risk per unit;
+// SPY < 200-day MA = unfavorable = 0.5% risk per unit). Same entry/exit rules, variable bet sizing.
+// Trade-off: Bet bigger when macro tailwind exists, but increased exposure during favorable periods.
+
+//@version=6
+strategy("Seykota Alt 18: Regime Risk v1.0",
+     overlay=true,
+     initial_capital=100000,
+     commission_type=strategy.commission.percent, commission_value=0.005,
+     slippage=2,
+     default_qty_type=strategy.fixed, default_qty_value=0,
+     pyramiding=10,
+     max_bars_back=5000)
+
+//================ Inputs
+allowLong   = input.bool(true,  "Allow LONGs?")
+allowShort  = input.bool(true,  "Allow SHORTs?")
+
+entryLen    = input.int(55,     "Donchian ENTRY lookback",            minval=10)
+exitLen     = input.int(10,     "Donchian EXIT lookback",             minval=5)
+nLen        = input.int(20,     "N = ATR length",                     minval=5)
+stopN       = input.float(2.0,  "Initial stop (in N)",                minval=0.5, step=0.25)
+addStepN    = input.float(0.5,  "Add every X * N",                    minval=0.25, step=0.25)
+maxUnits    = input.int(4,      "Max units (incl. initial)",          minval=1, maxval=10)
+
+// CHANGED: Regime-dependent risk parameters
+riskFavorable   = input.float(1.5, "Risk % per unit (FAVORABLE regime)", minval=0.1, maxval=5, step=0.1)
+riskNeutral     = input.float(1.0, "Risk % per unit (NEUTRAL regime)",   minval=0.1, maxval=5, step=0.1)
+riskUnfavorable = input.float(0.5, "Risk % per unit (UNFAVORABLE)",      minval=0.1, maxval=5, step=0.1)
+
+// Regime definition
+regimeSym    = input.symbol("SPY", "Regime indicator symbol")
+regimeTF     = input.timeframe("D", "Regime timeframe")
+regimeFastMA = input.int(50,    "Fast MA for regime",                 minval=10)
+regimeSlowMA = input.int(200,   "Slow MA for regime",                 minval=50)
+regimeMethod = input.string("MA Cross", "Regime method", options=["MA Cross", "Price vs MA", "Both"])
+
+timeExitMode= input.string("None","Time exit", options=["None","Close","Roll"])
+timeExitBars= input.int(60,     "Time exit bars (if used)",           minval=5)
+
+minVol      = input.int(0,      "Min 20-bar avg volume (chart TF)",   minval=0)
+showSignals = input.bool(true,  "Plot signals & stops?")
+plotDon     = input.bool(true,  "Plot Donchian bands?")
+plotRegime  = input.bool(true,  "Plot regime indicator?")
+
+// Date-range filter
+fromDate = input.time(defval=timestamp("2022-01-01T00:00:00"), title="Backtest FROM (yyyy-mm-dd)", confirm=true)
+toDate   = input.time(defval=timestamp("2099-12-31T23:59:59"), title="Backtest TO (yyyy-mm-dd)",   confirm=true)
+flatAtFrom = input.bool(true, "Force FLAT at range start?")
+isRangeStart = (time[1] < fromDate) and (time >= fromDate)
+if flatAtFrom and isRangeStart and strategy.position_size != 0
+    strategy.close_all(comment="Flat at FROM")
+
+//================ REGIME DETECTION
+regimeClose = request.security(regimeSym, regimeTF, close)
+regimeFastMAValue = request.security(regimeSym, regimeTF, ta.sma(close, regimeFastMA))
+regimeSlowMAValue = request.security(regimeSym, regimeTF, ta.sma(close, regimeSlowMA))
+
+// Determine regime status
+maCrossFavorable = regimeFastMAValue > regimeSlowMAValue
+maCrossUnfavorable = regimeFastMAValue < regimeSlowMAValue
+priceAboveMA = regimeClose > regimeSlowMAValue
+priceBelowMA = regimeClose < regimeSlowMAValue
+
+isFavorable = regimeMethod == "MA Cross" ? maCrossFavorable :
+               regimeMethod == "Price vs MA" ? priceAboveMA :
+               (maCrossFavorable and priceAboveMA)  // Both
+
+isUnfavorable = regimeMethod == "MA Cross" ? maCrossUnfavorable :
+                 regimeMethod == "Price vs MA" ? priceBelowMA :
+                 (maCrossUnfavorable and priceBelowMA)  // Both
+
+isNeutral = not isFavorable and not isUnfavorable
+
+// CHANGED: Select risk % based on regime
+riskPct = isFavorable ? riskFavorable :
+           isUnfavorable ? riskUnfavorable :
+           riskNeutral
+
+//================ Helpers (using dynamic riskPct)
+sharesForUnit(_equity, _Nentry, _riskPct) =>
+    riskDollars   = _equity * (_riskPct/100.0)
+    perShareRisk  = math.max(stopN * _Nentry, syminfo.mintick)
+    math.max(1, math.floor(riskDollars / perShareRisk))
+
+inRange = (time >= fromDate) and (time <= toDate)
+
+//================ Core calcs
+N        = ta.atr(nLen)
+volMA    = ta.sma(volume, 20)
+liqOK    = volMA >= minVol
+
+// Donchian levels
+donHi    = ta.highest(high, entryLen)
+donLo    = ta.lowest(low,  entryLen)
+donHiPrev= donHi[1]
+donLoPrev= donLo[1]
+
+exitHiPrev = ta.highest(high, exitLen)[1]
+exitLoPrev = ta.lowest(low,  exitLen)[1]
+
+//================ Signals (regime affects RISK, not entry logic)
+longBreak  = allowLong  and liqOK and (close > donHiPrev)
+shortBreak = allowShort and liqOK and (close < donLoPrev)
+
+//================ Position state
+var float N_entry       = na
+var float lastAddLong   = na
+var float lastAddShort  = na
+var int   units         = 0
+var int   barsInPos     = 0
+var bool  wantReenterL  = false
+var bool  wantReenterS  = false
+
+inPos     = strategy.position_size != 0
+inLong    = strategy.position_size > 0
+inShort   = strategy.position_size < 0
+
+if inPos
+    barsInPos += 1
+else
+    barsInPos    := 0
+    units        := 0
+    lastAddLong  := na
+    lastAddShort := na
+    N_entry      := na
+    wantReenterL := false
+    wantReenterS := false
+
+//================ Entries (with regime-dependent sizing)
+if inRange and not inPos and longBreak
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry, riskPct)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       := 1
+    lastAddLong := close
+
+if inRange and not inPos and shortBreak
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry, riskPct)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        := 1
+    lastAddShort := close
+
+//================ Add-ons (also use regime-dependent sizing)
+canAddLong  = inRange and inLong  and units < maxUnits and close >= nz(lastAddLong)  + addStepN * N_entry
+canAddShort = inRange and inShort and units < maxUnits and close <= nz(lastAddShort) - addStepN * N_entry
+
+if canAddLong
+    float sh = sharesForUnit(strategy.equity, N_entry, riskPct)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       += 1
+    lastAddLong := close
+
+if canAddShort
+    float sh = sharesForUnit(strategy.equity, N_entry, riskPct)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        += 1
+    lastAddShort := close
+
+//================ Exits
+var float stopL = na
+var float stopS = na
+
+if inRange and inLong
+    initStopL = strategy.position_avg_price - stopN * N_entry
+    stopL     := math.max(initStopL, exitLoPrev)
+    strategy.exit("L-EXIT", from_entry="L", stop=stopL)
+else
+    stopL := na
+
+if inRange and inShort
+    initStopS = strategy.position_avg_price + stopN * N_entry
+    stopS     := math.min(initStopS, exitHiPrev)
+    strategy.exit("S-EXIT", from_entry="S", stop=stopS)
+else
+    stopS := na
+
+//================ Optional time exit
+timeExitTrig = inRange and inPos and (timeExitMode != "None") and (barsInPos >= timeExitBars)
+
+if timeExitTrig
+    if inLong
+        if timeExitMode == "Close"
+            strategy.close("L", comment="Time Exit")
+        else if timeExitMode == "Roll"
+            wantReenterL := true
+            strategy.close("L", comment="Time Exit (Roll)")
+    if inShort
+        if timeExitMode == "Close"
+            strategy.close("S", comment="Time Exit")
+        else if timeExitMode == "Roll"
+            wantReenterS := true
+            strategy.close("S", comment="Time Exit (Roll)")
+
+// Re-enter after Roll
+if inRange and not inPos and wantReenterL and (close > donHiPrev)
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry, riskPct)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       := 1
+    lastAddLong := close
+    wantReenterL := false
+
+if inRange and not inPos and wantReenterS and (close < donLoPrev)
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry, riskPct)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        := 1
+    lastAddShort := close
+    wantReenterS := false
+
+//================ Plots
+// Background shading for regime
+regimeBg = isFavorable ? color.new(color.green, 95) : isUnfavorable ? color.new(color.red, 95) : color.new(color.yellow, 95)
+bgcolor(regimeBg, title="Market Regime")
+
+// Regime color for tables and labels
+regimeColor = isFavorable ? color.green : isUnfavorable ? color.red : color.yellow
+
+float dHiPlot = plotDon ? donHi : na
+float dLoPlot = plotDon ? donLo : na
+plot(dHiPlot, "Donchian High", color=color.new(color.blue, 40))
+plot(dLoPlot, "Donchian Low",  color=color.new(color.blue, 40))
+
+// Plot regime MAs (in data window only, not on chart)
+plot(plotRegime ? regimeFastMAValue : na, "Regime Fast MA", color=color.blue, display=display.data_window)
+plot(plotRegime ? regimeSlowMAValue : na, "Regime Slow MA", color=color.red, display=display.data_window)
+
+plotshape(showSignals and longBreak,  title="Long",  style=shape.triangleup,   location=location.belowbar, size=size.tiny, color=color.new(color.green, 0), text="Long")
+plotshape(showSignals and shortBreak, title="Short", style=shape.triangledown, location=location.abovebar, size=size.tiny, color=color.new(color.red,   0), text="Short")
+
+plot(showSignals and inLong  ? stopL : na, "Long Stop",  color=color.new(color.red, 0), style=plot.style_linebr, linewidth=2)
+plot(showSignals and inShort ? stopS : na, "Short Stop", color=color.new(color.red, 0), style=plot.style_linebr, linewidth=2)
+
+// Info table showing regime and risk adjustment
+var table infoTable = table.new(position.top_right, 2, 6, border_width=1)
+if barstate.islast and showSignals
+    table.cell(infoTable, 0, 0, "Filter Type:", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 0, "REGIME RISK", text_color=color.white, bgcolor=color.purple)
+
+    table.cell(infoTable, 0, 1, "Regime:", text_color=color.white, bgcolor=color.gray)
+    regimeStatus = isFavorable ? "FAVORABLE" : (isUnfavorable ? "UNFAVORABLE" : "NEUTRAL")
+    table.cell(infoTable, 1, 1, regimeStatus, text_color=color.white, bgcolor=regimeColor)
+
+    table.cell(infoTable, 0, 2, "Current Risk:", text_color=color.white, bgcolor=color.gray)
+    riskColor = riskPct >= riskFavorable ? color.green : (riskPct <= riskUnfavorable ? color.red : color.yellow)
+    table.cell(infoTable, 1, 2, str.tostring(riskPct) + "% / unit", text_color=color.white, bgcolor=riskColor)
+
+    totalRisk = units * riskPct
+    table.cell(infoTable, 0, 3, "Total Exposure:", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 3, str.tostring(totalRisk, "#.##") + "%", text_color=color.white, bgcolor=color.gray)
+
+    table.cell(infoTable, 0, 4, "Indicator:", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 4, regimeSym, text_color=color.white, bgcolor=color.gray)
+
+    table.cell(infoTable, 0, 5, "Units:", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 5, str.tostring(units) + "/" + str.tostring(maxUnits), text_color=color.white, bgcolor=color.gray)
+
+// Risk comparison label
+var label riskLabel = na
+if barstate.islast and showSignals
+    riskText = "Regime Risk Scaling:\n" + "Favorable: " + str.tostring(riskFavorable) + "%\n" + "Neutral: " + str.tostring(riskNeutral) + "%\n" + "Unfavorable: " + str.tostring(riskUnfavorable) + "%"
+    label.delete(riskLabel)
+    riskLabel := label.new(bar_index - 50, high, riskText, style=label.style_label_down, color=regimeColor, textcolor=color.white, size=size.small)

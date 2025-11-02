@@ -1,0 +1,281 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © danieltuckerrust
+// ALTERNATIVE 16: Anti-Chop Filters
+// THEORY: Trend following systems fail in ranging markets; only trade when genuine trend exists.
+// The baseline takes every Donchian breakout. But breakouts in choppy, sideways markets lead to
+// whipsaws. This alternative requires three confirming filters: ADX > 25 (directional strength),
+// Efficiency Ratio > 0.3 (net movement vs total movement), and Trend Strength (% of bars closing
+// higher/lower). Seykota: "The elements of good trading are: (1) cutting losses, (2) cutting losses,
+// and (3) cutting losses." This version focuses on avoiding bad trades entirely.
+// Trade-off: Far fewer trades, higher win rate, but may miss early trends or chop that becomes trend.
+
+//@version=6
+strategy("Seykota Alt 16: Anti-Chop Filters v1.0",
+     overlay=true,
+     initial_capital=100000,
+     commission_type=strategy.commission.percent, commission_value=0.005,
+     slippage=2,
+     default_qty_type=strategy.fixed, default_qty_value=0,
+     pyramiding=10,
+     max_bars_back=5000)
+
+//================ Inputs
+allowLong   = input.bool(true,  "Allow LONGs?")
+allowShort  = input.bool(true,  "Allow SHORTs?")
+
+entryLen    = input.int(55,     "Donchian ENTRY lookback",            minval=10)
+exitLen     = input.int(10,     "Donchian EXIT lookback",             minval=5)
+nLen        = input.int(20,     "N = ATR length",                     minval=5)
+stopN       = input.float(2.0,  "Initial stop (in N)",                minval=0.5, step=0.25)
+addStepN    = input.float(0.5,  "Add every X * N",                    minval=0.25, step=0.25)
+maxUnits    = input.int(4,      "Max units (incl. initial)",          minval=1, maxval=10)
+riskPct     = input.float(1.0,  "Risk % of equity PER UNIT",          minval=0.1, maxval=5, step=0.1)
+
+// CHANGED: Anti-chop filter parameters
+useAdx      = input.bool(true,  "Use ADX filter?")
+adxLen      = input.int(14,     "ADX length",                         minval=5)
+adxThresh   = input.float(25,   "Min ADX threshold",                  minval=10, maxval=50, step=5)
+
+useER       = input.bool(true,  "Use Efficiency Ratio filter?")
+erLen       = input.int(20,     "ER length",                          minval=5)
+erThresh    = input.float(0.3,  "Min ER threshold",                   minval=0, maxval=1, step=0.05)
+
+useTrendStr = input.bool(true,  "Use Trend Strength filter?")
+trendLen    = input.int(20,     "Trend strength length",              minval=5)
+trendThresh = input.float(60,   "Min trend strength %",               minval=0, maxval=100, step=5)
+
+useMarket   = input.bool(false, "Use market regime filter?")
+marketSym   = input.symbol("SPY", "Market symbol for regime (if used)")
+marketTF    = input.timeframe("D", "Regime timeframe (if used)")
+marketLen   = input.int(200,    "Market MA length (if used)",         minval=50)
+
+timeExitMode= input.string("None","Time exit", options=["None","Close","Roll"])
+timeExitBars= input.int(60,     "Time exit bars (if used)",           minval=5)
+
+minVol      = input.int(0,      "Min 20-bar avg volume (chart TF)",   minval=0)
+showSignals = input.bool(true,  "Plot signals & stops?")
+plotDon     = input.bool(true,  "Plot Donchian bands?")
+
+// Date-range filter
+fromDate = input.time(defval=timestamp("2022-01-01T00:00:00"), title="Backtest FROM (yyyy-mm-dd)", confirm=true)
+toDate   = input.time(defval=timestamp("2099-12-31T23:59:59"), title="Backtest TO (yyyy-mm-dd)",   confirm=true)
+flatAtFrom = input.bool(true, "Force FLAT at range start?")
+isRangeStart = (time[1] < fromDate) and (time >= fromDate)
+if flatAtFrom and isRangeStart and strategy.position_size != 0
+    strategy.close_all(comment="Flat at FROM")
+
+//================ Helpers
+sharesForUnit(_equity, _Nentry) =>
+    riskDollars   = _equity * (riskPct/100.0)
+    perShareRisk  = math.max(stopN * _Nentry, syminfo.mintick)
+    math.max(1, math.floor(riskDollars / perShareRisk))
+
+inRange = (time >= fromDate) and (time <= toDate)
+
+//================ Core calcs
+N        = ta.atr(nLen)
+volMA    = ta.sma(volume, 20)
+liqOK    = volMA >= minVol
+
+// Donchian levels
+donHi    = ta.highest(high, entryLen)
+donLo    = ta.lowest(low,  entryLen)
+donHiPrev= donHi[1]
+donLoPrev= donLo[1]
+
+exitHiPrev = ta.highest(high, exitLen)[1]
+exitLoPrev = ta.lowest(low,  exitLen)[1]
+
+// Market regime (optional)
+mClose = request.security(marketSym, marketTF, close)
+mMA    = request.security(marketSym, marketTF, ta.sma(close, marketLen))
+longRegOK  = not useMarket or (mClose > mMA)
+shortRegOK = not useMarket or (mClose < mMA)
+
+//================ ANTI-CHOP FILTERS
+
+// 1. ADX (Average Directional Index) - measures trend strength
+[diPlus, diMinus, adx] = ta.dmi(adxLen, adxLen)
+adxOK = not useAdx or (adx > adxThresh)
+
+// 2. Efficiency Ratio (Kaufman) - net movement / total movement
+priceChange = math.abs(close - close[erLen])
+volatility = 0.0
+for i = 0 to erLen - 1
+    volatility := volatility + math.abs(close[i] - close[i + 1])
+
+efficiencyRatio = volatility > 0 ? priceChange / volatility : 0
+erOK = not useER or (efficiencyRatio > erThresh)
+
+// 3. Trend Strength - % of bars closing higher/lower over period
+upBars = 0
+for i = 1 to trendLen
+    if close[i] > close[i + 1]
+        upBars := upBars + 1
+
+trendStrength = (upBars / trendLen) * 100
+trendingUp = trendStrength > (50 + trendThresh/2)
+trendingDown = trendStrength < (50 - trendThresh/2)
+trendStrOK = not useTrendStr or trendingUp or trendingDown
+
+// Combined trend quality filter
+trendQualityOK = adxOK and erOK and trendStrOK
+
+//================ Signals (WITH ANTI-CHOP FILTERS)
+longBreak  = allowLong  and liqOK and longRegOK  and trendQualityOK and (close > donHiPrev)
+shortBreak = allowShort and liqOK and shortRegOK and trendQualityOK and (close < donLoPrev)
+
+//================ Position state
+var float N_entry       = na
+var float lastAddLong   = na
+var float lastAddShort  = na
+var int   units         = 0
+var int   barsInPos     = 0
+var bool  wantReenterL  = false
+var bool  wantReenterS  = false
+
+inPos     = strategy.position_size != 0
+inLong    = strategy.position_size > 0
+inShort   = strategy.position_size < 0
+
+if inPos
+    barsInPos += 1
+else
+    barsInPos    := 0
+    units        := 0
+    lastAddLong  := na
+    lastAddShort := na
+    N_entry      := na
+    wantReenterL := false
+    wantReenterS := false
+
+//================ Entries
+if inRange and not inPos and longBreak
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       := 1
+    lastAddLong := close
+
+if inRange and not inPos and shortBreak
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        := 1
+    lastAddShort := close
+
+//================ Add-ons (also require trend quality)
+canAddLong  = inRange and inLong  and units < maxUnits and trendQualityOK and close >= nz(lastAddLong)  + addStepN * N_entry
+canAddShort = inRange and inShort and units < maxUnits and trendQualityOK and close <= nz(lastAddShort) - addStepN * N_entry
+
+if canAddLong
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       += 1
+    lastAddLong := close
+
+if canAddShort
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        += 1
+    lastAddShort := close
+
+//================ Exits
+var float stopL = na
+var float stopS = na
+
+if inRange and inLong
+    initStopL = strategy.position_avg_price - stopN * N_entry
+    stopL     := math.max(initStopL, exitLoPrev)
+    strategy.exit("L-EXIT", from_entry="L", stop=stopL)
+else
+    stopL := na
+
+if inRange and inShort
+    initStopS = strategy.position_avg_price + stopN * N_entry
+    stopS     := math.min(initStopS, exitHiPrev)
+    strategy.exit("S-EXIT", from_entry="S", stop=stopS)
+else
+    stopS := na
+
+//================ Optional time exit
+timeExitTrig = inRange and inPos and (timeExitMode != "None") and (barsInPos >= timeExitBars)
+
+if timeExitTrig
+    if inLong
+        if timeExitMode == "Close"
+            strategy.close("L", comment="Time Exit")
+        else if timeExitMode == "Roll"
+            wantReenterL := true
+            strategy.close("L", comment="Time Exit (Roll)")
+    if inShort
+        if timeExitMode == "Close"
+            strategy.close("S", comment="Time Exit")
+        else if timeExitMode == "Roll"
+            wantReenterS := true
+            strategy.close("S", comment="Time Exit (Roll)")
+
+// Re-enter after Roll
+if inRange and not inPos and wantReenterL and longRegOK and trendQualityOK and (close > donHiPrev)
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       := 1
+    lastAddLong := close
+    wantReenterL := false
+
+if inRange and not inPos and wantReenterS and shortRegOK and trendQualityOK and (close < donLoPrev)
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        := 1
+    lastAddShort := close
+    wantReenterS := false
+
+//================ Plots
+// Background color for trend quality
+trendBgColor = trendQualityOK ? color.new(color.green, 95) : color.new(color.red, 95)
+bgcolor(trendBgColor, title="Trend Quality")
+
+float dHiPlot = plotDon ? donHi : na
+float dLoPlot = plotDon ? donLo : na
+plot(dHiPlot, "Donchian High", color=color.new(color.blue, 40))
+plot(dLoPlot, "Donchian Low",  color=color.new(color.blue, 40))
+
+plotshape(showSignals and longBreak,  title="Long",  style=shape.triangleup,   location=location.belowbar, size=size.tiny, color=color.new(color.green, 0), text="Quality↑")
+plotshape(showSignals and shortBreak, title="Short", style=shape.triangledown, location=location.abovebar, size=size.tiny, color=color.new(color.red,   0), text="Quality↓")
+
+plot(showSignals and inLong  ? stopL : na, "Long Stop",  color=color.new(color.red, 0), style=plot.style_linebr, linewidth=2)
+plot(showSignals and inShort ? stopS : na, "Short Stop", color=color.new(color.red, 0), style=plot.style_linebr, linewidth=2)
+
+// Trend quality indicators panel
+var table infoTable = table.new(position.top_right, 3, 6, border_width=1)
+if barstate.islast and showSignals
+    table.cell(infoTable, 0, 0, "Filter:", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 0, "ANTI-CHOP", text_color=color.white, bgcolor=color.purple)
+    table.cell(infoTable, 2, 0, "", text_color=color.white, bgcolor=color.purple)
+
+    table.cell(infoTable, 0, 1, "Quality:", text_color=color.white, bgcolor=color.gray)
+    qualityStatus = trendQualityOK ? "GOOD" : "POOR"
+    qualityColor = trendQualityOK ? color.green : color.red
+    table.cell(infoTable, 1, 1, qualityStatus, text_color=color.white, bgcolor=qualityColor)
+    table.cell(infoTable, 2, 1, "", text_color=color.white, bgcolor=qualityColor)
+
+    table.cell(infoTable, 0, 2, "ADX:", text_color=color.white, bgcolor=color.gray)
+    adxColor = adxOK ? color.green : color.red
+    table.cell(infoTable, 1, 2, str.tostring(adx, "#.#"), text_color=color.white, bgcolor=adxColor)
+    table.cell(infoTable, 2, 2, adxOK ? "✓" : "✗", text_color=color.white, bgcolor=adxColor)
+
+    table.cell(infoTable, 0, 3, "Efficiency:", text_color=color.white, bgcolor=color.gray)
+    erColor = erOK ? color.green : color.red
+    table.cell(infoTable, 1, 3, str.tostring(efficiencyRatio, "#.##"), text_color=color.white, bgcolor=erColor)
+    table.cell(infoTable, 2, 3, erOK ? "✓" : "✗", text_color=color.white, bgcolor=erColor)
+
+    table.cell(infoTable, 0, 4, "Trend %:", text_color=color.white, bgcolor=color.gray)
+    trendColor = trendStrOK ? color.green : color.red
+    table.cell(infoTable, 1, 4, str.tostring(trendStrength, "#.#") + "%", text_color=color.white, bgcolor=trendColor)
+    table.cell(infoTable, 2, 4, trendStrOK ? "✓" : "✗", text_color=color.white, bgcolor=trendColor)
+
+    table.cell(infoTable, 0, 5, "Units:", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 5, str.tostring(units) + "/" + str.tostring(maxUnits), text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 2, 5, "", text_color=color.white, bgcolor=color.gray)

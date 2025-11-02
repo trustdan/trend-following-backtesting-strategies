@@ -1,0 +1,209 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © danieltuckerrust
+// ALTERNATIVE 6: Pure ATR Trailing Stop
+// THEORY: Fixed ATR-based stops respect volatility character better than arbitrary N-bar lows.
+// The baseline uses a hybrid exit: max(2N stop, 10-bar Donchian low). The 10-bar exit can
+// prematurely exit a trend that's just having a shallow pullback. A pure ATR-based stop
+// is solely price/volatility-based with no arbitrary lookback period.
+// Trade-off: Longer rides in trends, but risk giving back more profit in sharp reversals.
+
+//@version=6
+strategy("Seykota Alt 6: Pure ATR Stop v1.0",
+     overlay=true,
+     initial_capital=100000,
+     commission_type=strategy.commission.percent, commission_value=0.005,
+     slippage=2,
+     default_qty_type=strategy.fixed, default_qty_value=0,
+     pyramiding=10,
+     max_bars_back=5000)
+
+//================ Inputs
+allowLong   = input.bool(true,  "Allow LONGs?")
+allowShort  = input.bool(true,  "Allow SHORTs?")
+
+entryLen    = input.int(55,     "Donchian ENTRY lookback",            minval=10)
+nLen        = input.int(20,     "N = ATR length",                     minval=5)
+stopN       = input.float(2.0,  "Initial stop (in N)",                minval=0.5, step=0.25)
+addStepN    = input.float(0.5,  "Add every X * N",                    minval=0.25, step=0.25)
+maxUnits    = input.int(4,      "Max units (incl. initial)",          minval=1, maxval=10)
+riskPct     = input.float(1.0,  "Risk % of equity PER UNIT",          minval=0.1, maxval=5, step=0.1)
+
+useMarket   = input.bool(false, "Use market regime filter?")
+marketSym   = input.symbol("SPY", "Market symbol for regime (if used)")
+marketTF    = input.timeframe("D", "Regime timeframe (if used)")
+marketLen   = input.int(200,    "Market MA length (if used)",         minval=50)
+
+timeExitMode= input.string("None","Time exit", options=["None","Close","Roll"])
+timeExitBars= input.int(60,     "Time exit bars (if used)",           minval=5)
+
+minVol      = input.int(0,      "Min 20-bar avg volume (chart TF)",   minval=0)
+showSignals = input.bool(true,  "Plot signals & stops?")
+plotDon     = input.bool(true,  "Plot Donchian bands?")
+
+// Date-range filter
+fromDate = input.time(defval=timestamp("2022-01-01T00:00:00"), title="Backtest FROM (yyyy-mm-dd)", confirm=true)
+toDate   = input.time(defval=timestamp("2099-12-31T23:59:59"), title="Backtest TO (yyyy-mm-dd)",   confirm=true)
+flatAtFrom = input.bool(true, "Force FLAT at range start?")
+isRangeStart = (time[1] < fromDate) and (time >= fromDate)
+if flatAtFrom and isRangeStart and strategy.position_size != 0
+    strategy.close_all(comment="Flat at FROM")
+
+//================ Helpers
+sharesForUnit(_equity, _Nentry) =>
+    riskDollars   = _equity * (riskPct/100.0)
+    perShareRisk  = math.max(stopN * _Nentry, syminfo.mintick)
+    math.max(1, math.floor(riskDollars / perShareRisk))
+
+inRange = (time >= fromDate) and (time <= toDate)
+
+//================ Core calcs
+N        = ta.atr(nLen)
+volMA    = ta.sma(volume, 20)
+liqOK    = volMA >= minVol
+
+// Donchian levels
+donHi    = ta.highest(high, entryLen)
+donLo    = ta.lowest(low,  entryLen)
+donHiPrev= donHi[1]
+donLoPrev= donLo[1]
+
+// NOTE: No exit Donchian calculation needed - pure ATR stop only
+
+// Market regime (optional)
+mClose = request.security(marketSym, marketTF, close)
+mMA    = request.security(marketSym, marketTF, ta.sma(close, marketLen))
+longRegOK  = not useMarket or (mClose > mMA)
+shortRegOK = not useMarket or (mClose < mMA)
+
+//================ Signals
+longBreak  = allowLong  and liqOK and longRegOK  and (close > donHiPrev)
+shortBreak = allowShort and liqOK and shortRegOK and (close < donLoPrev)
+
+//================ Position state
+var float N_entry       = na
+var float lastAddLong   = na
+var float lastAddShort  = na
+var int   units         = 0
+var int   barsInPos     = 0
+var bool  wantReenterL  = false
+var bool  wantReenterS  = false
+
+inPos     = strategy.position_size != 0
+inLong    = strategy.position_size > 0
+inShort   = strategy.position_size < 0
+
+if inPos
+    barsInPos += 1
+else
+    barsInPos    := 0
+    units        := 0
+    lastAddLong  := na
+    lastAddShort := na
+    N_entry      := na
+    wantReenterL := false
+    wantReenterS := false
+
+//================ Entries
+if inRange and not inPos and longBreak
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       := 1
+    lastAddLong := close
+
+if inRange and not inPos and shortBreak
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        := 1
+    lastAddShort := close
+
+//================ Add-ons
+canAddLong  = inRange and inLong  and units < maxUnits and close >= nz(lastAddLong)  + addStepN * N_entry
+canAddShort = inRange and inShort and units < maxUnits and close <= nz(lastAddShort) - addStepN * N_entry
+
+if canAddLong
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       += 1
+    lastAddLong := close
+
+if canAddShort
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        += 1
+    lastAddShort := close
+
+//================ Exits - PURE ATR STOP ONLY
+var float stopL = na
+var float stopS = na
+
+if inRange and inLong
+    // CHANGED: Use ONLY the ATR stop (no Donchian exit comparison)
+    initStopL = strategy.position_avg_price - stopN * N_entry
+    stopL     := initStopL  // Pure ATR stop, no hybrid logic
+    strategy.exit("L-EXIT", from_entry="L", stop=stopL)
+else
+    stopL := na
+
+if inRange and inShort
+    // CHANGED: Use ONLY the ATR stop (no Donchian exit comparison)
+    initStopS = strategy.position_avg_price + stopN * N_entry
+    stopS     := initStopS  // Pure ATR stop, no hybrid logic
+    strategy.exit("S-EXIT", from_entry="S", stop=stopS)
+else
+    stopS := na
+
+//================ Optional time exit
+timeExitTrig = inRange and inPos and (timeExitMode != "None") and (barsInPos >= timeExitBars)
+
+if timeExitTrig
+    if inLong
+        if timeExitMode == "Close"
+            strategy.close("L", comment="Time Exit")
+        else if timeExitMode == "Roll"
+            wantReenterL := true
+            strategy.close("L", comment="Time Exit (Roll)")
+    if inShort
+        if timeExitMode == "Close"
+            strategy.close("S", comment="Time Exit")
+        else if timeExitMode == "Roll"
+            wantReenterS := true
+            strategy.close("S", comment="Time Exit (Roll)")
+
+// Re-enter after Roll
+if inRange and not inPos and wantReenterL and longRegOK and (close > donHiPrev)
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       := 1
+    lastAddLong := close
+    wantReenterL := false
+
+if inRange and not inPos and wantReenterS and shortRegOK and (close < donLoPrev)
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        := 1
+    lastAddShort := close
+    wantReenterS := false
+
+//================ Plots
+float dHiPlot = plotDon ? donHi : na
+float dLoPlot = plotDon ? donLo : na
+plot(dHiPlot, "Donchian High", color=color.new(color.blue, 40))
+plot(dLoPlot, "Donchian Low",  color=color.new(color.blue, 40))
+
+plotshape(showSignals and longBreak,  title="Long Breakout",  style=shape.triangleup,   location=location.belowbar, size=size.tiny,  color=color.new(color.green, 0), text="Long")
+plotshape(showSignals and shortBreak, title="Short Breakout", style=shape.triangledown, location=location.abovebar, size=size.tiny,  color=color.new(color.red,   0), text="Short")
+
+plot(showSignals and inLong  ? stopL : na, "Long Stop (ATR only)",  color=color.new(color.red,  0), style=plot.style_linebr, linewidth=2)
+plot(showSignals and inShort ? stopS : na, "Short Stop (ATR only)", color=color.new(color.red,  0), style=plot.style_linebr, linewidth=2)
+
+// Info label
+var table infoTable = table.new(position.top_right, 2, 2, border_width=1)
+if barstate.islast and showSignals
+    table.cell(infoTable, 0, 0, "Exit Type:", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 0, "Pure ATR (" + str.tostring(stopN) + "N)", text_color=color.white, bgcolor=color.orange)
+    table.cell(infoTable, 0, 1, "No Donchian Exit", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 1, "Fixed from Avg", text_color=color.white, bgcolor=color.orange)

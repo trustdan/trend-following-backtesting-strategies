@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"c:\\Users\\Dan\\pine-scripts\\rename_scripts.ps1\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

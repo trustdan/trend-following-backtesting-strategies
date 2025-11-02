@@ -1,0 +1,137 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © danieltuckerrust
+// ALTERNATIVE 34: Fractional Pyramid + Momentum Gating
+// THEORY: Best position sizing (Alt 26: +33.5%) + quality adds (Alt 30: +23.6%)
+// - Descending sizes (100%, 75%, 50%, 25%)
+// - Only add when RSI > 60 (longs) or RSI < 40 (shorts)
+// INSIGHT: Combine best sizing with selective adds = optimal risk/reward
+// Trade-off: Fewer adds than Alt 26, but higher quality
+//
+// BACKTEST RESULTS (SPY 2022-2025): +33.83% | Profit Factor: 1.396 | Win Rate: 50.73% | Max DD: 12.45%
+
+//@version=6
+strategy("Seykota Alt 34: Fract + Momentum v1.0",
+     overlay=true,
+     initial_capital=100000,
+     commission_type=strategy.commission.percent, commission_value=0.005,
+     slippage=2,
+     default_qty_type=strategy.fixed, default_qty_value=0,
+     pyramiding=10,
+     max_bars_back=5000)
+
+allowLong   = input.bool(true,  "Allow LONGs?")
+allowShort  = input.bool(true,  "Allow SHORTs?")
+entryLen    = input.int(55,     "Donchian ENTRY lookback",            minval=10)
+rsiLen      = input.int(14,     "RSI length",                         minval=2)
+rsiLongAdd  = input.float(60.0, "RSI for LONG adds",                  minval=50, maxval=80, step=1)
+rsiShortAdd = input.float(40.0, "RSI for SHORT adds",                 minval=20, maxval=50, step=1)
+nLen        = input.int(20,     "N = ATR length",                     minval=5)
+stopN       = input.float(2.0,  "Initial stop (in N)",                minval=0.5, step=0.25)
+trailLen    = input.int(22,     "Chandelier trail lookback",          minval=5)
+trailN      = input.float(3.0,  "Chandelier trail (in N)",            minval=0.5, step=0.25)
+addStepN    = input.float(0.5,  "Add every X * N",                    minval=0.25, step=0.25)
+maxUnits    = input.int(4,      "Max units",                          minval=1, maxval=10)
+riskPct     = input.float(1.0,  "Risk % for FIRST unit",              minval=0.1, maxval=5, step=0.1)
+useTargets   = input.bool(true,  "Use profit targets?")
+target1N     = input.float(3.0,  "Target 1 (in N)",                   minval=1, step=0.5)
+target2N     = input.float(6.0,  "Target 2 (in N)",                   minval=1, step=0.5)
+target3N     = input.float(9.0,  "Target 3 (in N)",                   minval=1, step=0.5)
+useMarket   = input.bool(false, "Use market regime filter?")
+marketSym   = input.symbol("SPY", "Market symbol")
+marketTF    = input.timeframe("D", "Regime timeframe")
+marketLen   = input.int(200,    "Market MA length",                   minval=50)
+minVol      = input.int(0,      "Min 20-bar avg volume",              minval=0)
+showSignals = input.bool(true,  "Plot signals & stops?")
+plotDon     = input.bool(true,  "Plot Donchian bands?")
+fromDate = input.time(defval=timestamp("2022-01-01T00:00:00"), title="Backtest FROM", confirm=true)
+toDate   = input.time(defval=timestamp("2099-12-31T23:59:59"), title="Backtest TO", confirm=true)
+flatAtFrom = input.bool(true, "Force FLAT at range start?")
+isRangeStart = (time[1] < fromDate) and (time >= fromDate)
+if flatAtFrom and isRangeStart and strategy.position_size != 0
+    strategy.close_all(comment="Flat at FROM")
+
+sharesForUnit(_equity, _Nentry, _unitNum) =>
+    riskDollars   = _equity * (riskPct/100.0)
+    perShareRisk  = math.max(stopN * _Nentry, syminfo.mintick)
+    baseShares    = math.max(1, math.floor(riskDollars / perShareRisk))
+    fraction = _unitNum == 1 ? 1.0 : (_unitNum == 2 ? 0.75 : (_unitNum == 3 ? 0.5 : 0.25))
+    math.max(1, math.floor(baseShares * fraction))
+
+inRange = (time >= fromDate) and (time <= toDate)
+N        = ta.atr(nLen)
+volMA    = ta.sma(volume, 20)
+liqOK    = volMA >= minVol
+rsi = ta.rsi(close, rsiLen)
+longMomentum = rsi >= rsiLongAdd
+shortMomentum = rsi <= rsiShortAdd
+donHi    = ta.highest(high, entryLen)
+donLo    = ta.lowest(low,  entryLen)
+donHiPrev= donHi[1]
+donLoPrev= donLo[1]
+trailHighest = ta.highest(high, trailLen)
+trailLowest  = ta.lowest(low,  trailLen)
+mClose = request.security(marketSym, marketTF, close)
+mMA    = request.security(marketSym, marketTF, ta.sma(close, marketLen))
+longRegOK  = not useMarket or (mClose > mMA)
+shortRegOK = not useMarket or (mClose < mMA)
+longBreak  = allowLong  and liqOK and longRegOK  and (close > donHiPrev)
+shortBreak = allowShort and liqOK and shortRegOK and (close < donLoPrev)
+
+var float N_entry = na, var float entryPrice = na, var float lastAddLong = na, var float lastAddShort = na
+var int units = 0, var bool target1Hit = false, var bool target2Hit = false, var bool target3Hit = false
+inPos = strategy.position_size != 0, inLong = strategy.position_size > 0, inShort = strategy.position_size < 0
+if not inPos
+    units := 0, lastAddLong := na, lastAddShort := na, N_entry := na, entryPrice := na
+    target1Hit := false, target2Hit := false, target3Hit := false
+
+if inRange and not inPos and longBreak
+    N_entry := N, entryPrice := close
+    strategy.entry("L", strategy.long, qty=sharesForUnit(strategy.equity, N_entry, 1))
+    units := 1, lastAddLong := close
+if inRange and not inPos and shortBreak
+    N_entry := N, entryPrice := close
+    strategy.entry("S", strategy.short, qty=sharesForUnit(strategy.equity, N_entry, 1))
+    units := 1, lastAddShort := close
+
+canAddLong  = inRange and inLong  and units < maxUnits and high >= nz(lastAddLong)  + addStepN * N_entry and longMomentum
+canAddShort = inRange and inShort and units < maxUnits and low  <= nz(lastAddShort) - addStepN * N_entry and shortMomentum
+if canAddLong
+    strategy.entry("L", strategy.long, qty=sharesForUnit(strategy.equity, N_entry, units + 1))
+    units += 1, lastAddLong := close
+if canAddShort
+    strategy.entry("S", strategy.short, qty=sharesForUnit(strategy.equity, N_entry, units + 1))
+    units += 1, lastAddShort := close
+
+if useTargets and inLong and not na(entryPrice) and not na(N_entry)
+    if not target1Hit and high >= entryPrice + target1N * N_entry
+        strategy.close("L", qty=sharesForUnit(strategy.equity, N_entry, 1), comment="T1"), target1Hit := true
+    if target1Hit and not target2Hit and high >= entryPrice + target2N * N_entry
+        strategy.close("L", qty=sharesForUnit(strategy.equity, N_entry, 1), comment="T2"), target2Hit := true
+    if target2Hit and not target3Hit and high >= entryPrice + target3N * N_entry
+        strategy.close("L", qty=sharesForUnit(strategy.equity, N_entry, 1), comment="T3"), target3Hit := true
+if useTargets and inShort and not na(entryPrice) and not na(N_entry)
+    if not target1Hit and low <= entryPrice - target1N * N_entry
+        strategy.close("S", qty=sharesForUnit(strategy.equity, N_entry, 1), comment="T1"), target1Hit := true
+    if target1Hit and not target2Hit and low <= entryPrice - target2N * N_entry
+        strategy.close("S", qty=sharesForUnit(strategy.equity, N_entry, 1), comment="T2"), target2Hit := true
+    if target2Hit and not target3Hit and low <= entryPrice - target3N * N_entry
+        strategy.close("S", qty=sharesForUnit(strategy.equity, N_entry, 1), comment="T3"), target3Hit := true
+
+var float stopL = na, var float stopS = na
+if inRange and inLong
+    stopL := math.round_to_mintick(math.max(entryPrice - stopN * N_entry, trailHighest - trailN * N_entry))
+    strategy.exit("L-EXIT", from_entry="L", stop=stopL)
+else
+    stopL := na
+if inRange and inShort
+    stopS := math.round_to_mintick(math.min(entryPrice + stopN * N_entry, trailLowest + trailN * N_entry))
+    strategy.exit("S-EXIT", from_entry="S", stop=stopS)
+else
+    stopS := na
+
+plot(plotDon ? donHi : na, "Donchian High", color=color.new(color.blue, 40))
+plot(plotDon ? donLo : na, "Donchian Low",  color=color.new(color.blue, 40))
+plotshape(showSignals and longBreak, title="Long", style=shape.triangleup, location=location.belowbar, size=size.tiny, color=color.new(color.green, 0))
+plotshape(showSignals and shortBreak, title="Short", style=shape.triangledown, location=location.abovebar, size=size.tiny, color=color.new(color.red, 0))
+plot(showSignals and inLong ? stopL : na, "Stop", color=color.new(color.red, 0), style=plot.style_linebr, linewidth=2)
+plot(showSignals and inShort ? stopS : na, "Stop", color=color.new(color.red, 0), style=plot.style_linebr, linewidth=2)

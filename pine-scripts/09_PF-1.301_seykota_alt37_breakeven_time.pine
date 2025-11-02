@@ -1,0 +1,121 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © danieltuckerrust
+// ALTERNATIVE 37: Breakeven Lock + Time-Based Tightening
+// THEORY: Combine Alt 21 (breakeven lock: +28.2%) with Alt 25 (time tightening: +23.5%)
+// - Move stop to BE after 2N profit (lock in wins)
+// - Tighten stop from 3N to 1.5N after 30 bars (protect aging positions)
+// INSIGHT: Dual protection: profit-based AND time-based
+// Trade-off: More conservative, but double-layer risk management
+//
+// BACKTEST RESULTS (SPY 2022-2025): +26.41% | Profit Factor: 1.301 | Win Rate: 50.23% | Max DD: 16.06%
+
+//@version=6
+strategy("Seykota Alt 37: BE + Time v1.0",
+     overlay=true,
+     initial_capital=100000,
+     commission_type=strategy.commission.percent, commission_value=0.005,
+     slippage=2,
+     default_qty_type=strategy.fixed, default_qty_value=0,
+     pyramiding=10,
+     max_bars_back=5000)
+
+allowLong = input.bool(true, "Allow LONGs?"), allowShort = input.bool(true, "Allow SHORTs?")
+entryLen = input.int(55, "Donchian ENTRY", minval=10), nLen = input.int(20, "N = ATR length", minval=5)
+stopN = input.float(2.0, "Initial stop (N)", minval=0.5, step=0.25), breakEvenN = input.float(2.0, "Move to BE after X*N", minval=1.0, step=0.5)
+trailLen = input.int(22, "Trail lookback", minval=5), trailN = input.float(3.0, "Initial trail (N)", minval=0.5, step=0.25)
+tightTrailN = input.float(1.5, "TIGHT trail (N)", minval=0.25, step=0.25), tightenAfter = input.int(30, "Tighten after X bars", minval=5)
+addStepN = input.float(0.5, "Add every X*N", minval=0.25, step=0.25), maxUnits = input.int(4, "Max units", minval=1, maxval=10)
+riskPct = input.float(1.0, "Risk % per unit", minval=0.1, maxval=5, step=0.1)
+useTargets = input.bool(true, "Use targets?"), target1N = input.float(3.0, "T1 (N)", minval=1, step=0.5)
+target2N = input.float(6.0, "T2 (N)", minval=1, step=0.5), target3N = input.float(9.0, "T3 (N)", minval=1, step=0.5)
+useMarket = input.bool(false, "Use regime filter?"), marketSym = input.symbol("SPY", "Market symbol")
+marketTF = input.timeframe("D", "Regime TF"), marketLen = input.int(200, "Market MA", minval=50)
+minVol = input.int(0, "Min volume", minval=0), showSignals = input.bool(true, "Plot signals?"), plotDon = input.bool(true, "Plot Donchian?")
+fromDate = input.time(defval=timestamp("2022-01-01T00:00:00"), title="FROM", confirm=true)
+toDate = input.time(defval=timestamp("2099-12-31T23:59:59"), title="TO", confirm=true)
+flatAtFrom = input.bool(true, "FLAT at range start?")
+isRangeStart = (time[1] < fromDate) and (time >= fromDate)
+if flatAtFrom and isRangeStart and strategy.position_size != 0
+    strategy.close_all(comment="Flat at FROM")
+
+sharesForUnit(_e, _n) =>
+    r = _e * (riskPct/100.0)
+    psr = math.max(stopN * _n, syminfo.mintick)
+    math.max(1, math.floor(r / psr))
+
+inRange = (time >= fromDate) and (time <= toDate)
+N = ta.atr(nLen), volMA = ta.sma(volume, 20), liqOK = volMA >= minVol
+donHi = ta.highest(high, entryLen), donLo = ta.lowest(low, entryLen)
+donHiPrev = donHi[1], donLoPrev = donLo[1]
+trailHighest = ta.highest(high, trailLen), trailLowest = ta.lowest(low, trailLen)
+mClose = request.security(marketSym, marketTF, close), mMA = request.security(marketSym, marketTF, ta.sma(close, marketLen))
+longRegOK = not useMarket or (mClose > mMA), shortRegOK = not useMarket or (mClose < mMA)
+longBreak = allowLong and liqOK and longRegOK and (close > donHiPrev)
+shortBreak = allowShort and liqOK and shortRegOK and (close < donLoPrev)
+
+var float N_entry = na, var float entryPrice = na, var float lastAddLong = na, var float lastAddShort = na
+var int units = 0, var int barsInPos = 0, var bool t1 = false, var bool t2 = false, var bool t3 = false, var bool beLocked = false
+inPos = strategy.position_size != 0, inLong = strategy.position_size > 0, inShort = strategy.position_size < 0
+if inPos
+    barsInPos += 1
+else
+    barsInPos := 0, units := 0, lastAddLong := na, lastAddShort := na, N_entry := na, entryPrice := na, t1 := false, t2 := false, t3 := false, beLocked := false
+
+if inRange and not inPos and longBreak
+    N_entry := N, entryPrice := close, strategy.entry("L", strategy.long, qty=sharesForUnit(strategy.equity, N_entry))
+    units := 1, lastAddLong := close
+if inRange and not inPos and shortBreak
+    N_entry := N, entryPrice := close, strategy.entry("S", strategy.short, qty=sharesForUnit(strategy.equity, N_entry))
+    units := 1, lastAddShort := close
+
+if inRange and inLong and units < maxUnits and high >= nz(lastAddLong) + addStepN * N_entry
+    strategy.entry("L", strategy.long, qty=sharesForUnit(strategy.equity, N_entry)), units += 1, lastAddLong := close
+if inRange and inShort and units < maxUnits and low <= nz(lastAddShort) - addStepN * N_entry
+    strategy.entry("S", strategy.short, qty=sharesForUnit(strategy.equity, N_entry)), units += 1, lastAddShort := close
+
+if useTargets and inLong and not na(entryPrice) and not na(N_entry)
+    if not t1 and high >= entryPrice + target1N * N_entry
+        strategy.close("L", qty=sharesForUnit(strategy.equity, N_entry), comment="T1"), t1 := true
+    if t1 and not t2 and high >= entryPrice + target2N * N_entry
+        strategy.close("L", qty=sharesForUnit(strategy.equity, N_entry), comment="T2"), t2 := true
+    if t2 and not t3 and high >= entryPrice + target3N * N_entry
+        strategy.close("L", qty=sharesForUnit(strategy.equity, N_entry), comment="T3"), t3 := true
+if useTargets and inShort and not na(entryPrice) and not na(N_entry)
+    if not t1 and low <= entryPrice - target1N * N_entry
+        strategy.close("S", qty=sharesForUnit(strategy.equity, N_entry), comment="T1"), t1 := true
+    if t1 and not t2 and low <= entryPrice - target2N * N_entry
+        strategy.close("S", qty=sharesForUnit(strategy.equity, N_entry), comment="T2"), t2 := true
+    if t2 and not t3 and low <= entryPrice - target3N * N_entry
+        strategy.close("S", qty=sharesForUnit(strategy.equity, N_entry), comment="T3"), t3 := true
+
+var float stopL = na, var float stopS = na
+if inRange and inLong
+    initStopL = entryPrice - stopN * N_entry
+    effectiveN = barsInPos >= tightenAfter ? tightTrailN : trailN
+    chandelierL = trailHighest - effectiveN * N_entry
+    profitL = close - entryPrice
+    if not beLocked and profitL >= breakEvenN * N_entry
+        beLocked := true
+    stopL := beLocked ? math.round_to_mintick(math.max(entryPrice, chandelierL)) : math.round_to_mintick(math.max(initStopL, chandelierL))
+    strategy.exit("L-EXIT", from_entry="L", stop=stopL)
+else
+    stopL := na
+if inRange and inShort
+    initStopS = entryPrice + stopN * N_entry
+    effectiveN = barsInPos >= tightenAfter ? tightTrailN : trailN
+    chandelierS = trailLowest + effectiveN * N_entry
+    profitS = entryPrice - close
+    if not beLocked and profitS >= breakEvenN * N_entry
+        beLocked := true
+    stopS := beLocked ? math.round_to_mintick(math.min(entryPrice, chandelierS)) : math.round_to_mintick(math.min(initStopS, chandelierS))
+    strategy.exit("S-EXIT", from_entry="S", stop=stopS)
+else
+    stopS := na
+
+plot(plotDon ? donHi : na, "DonHi", color=color.new(color.blue, 40))
+plot(plotDon ? donLo : na, "DonLo", color=color.new(color.blue, 40))
+plotshape(showSignals and longBreak, title="L", style=shape.triangleup, location=location.belowbar, size=size.tiny, color=color.new(color.green, 0))
+plotshape(showSignals and shortBreak, title="S", style=shape.triangledown, location=location.abovebar, size=size.tiny, color=color.new(color.red, 0))
+stopColor = beLocked ? color.green : (barsInPos >= tightenAfter ? color.orange : color.red)
+plot(showSignals and inLong ? stopL : na, "Stop", color=color.new(stopColor, 0), style=plot.style_linebr, linewidth=2)
+plot(showSignals and inShort ? stopS : na, "Stop", color=color.new(stopColor, 0), style=plot.style_linebr, linewidth=2)

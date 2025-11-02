@@ -1,0 +1,217 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © danieltuckerrust
+
+//@version=6
+strategy("Seykota / Turtle Core v2.1 + Date Range",
+     overlay=true,
+     initial_capital=100000,
+     commission_type=strategy.commission.percent, commission_value=0.005,
+     default_qty_type=strategy.fixed, default_qty_value=0,
+     pyramiding=10,
+     max_bars_back=5000)
+
+//================ Inputs
+allowLong   = input.bool(true,  "Allow LONGs?")
+allowShort  = input.bool(true,  "Allow SHORTs?")
+
+entryLen    = input.int(55,     "Donchian ENTRY lookback (System-2)", minval=10)
+exitLen     = input.int(10,     "Donchian EXIT lookback",             minval=5)
+nLen        = input.int(20,     "N = ATR length",                     minval=5)
+stopN       = input.float(2.0,  "Initial stop (in N)",                minval=0.5, step=0.25)
+addStepN    = input.float(0.5,  "Add every X * N",                    minval=0.25, step=0.25)
+maxUnits    = input.int(4,      "Max units (incl. initial)",          minval=1, maxval=10)
+riskPct     = input.float(1.0,  "Risk % of equity PER UNIT",          minval=0.1, maxval=5, step=0.1)
+
+useMarket   = input.bool(false, "Use market regime filter?")
+marketSym   = input.symbol("SPY", "Market symbol for regime (if used)")
+marketTF    = input.timeframe("D", "Regime timeframe (if used)")
+marketLen   = input.int(200,    "Market MA length (if used)",         minval=50)
+
+timeExitMode= input.string("None","Time exit", options=["None","Close","Roll"])
+timeExitBars= input.int(60,     "Time exit bars (if used)",           minval=5)
+
+minVol      = input.int(0,      "Min 20-bar avg volume (chart TF)",   minval=0)
+showSignals = input.bool(true,   "Plot signals & stops?")
+plotDon     = input.bool(true,   "Plot Donchian bands?")
+
+// === Date-range filter (local chart timezone) — no trailing commas
+fromDate = input.time(defval=timestamp("2022-01-01T00:00:00"), title="Backtest FROM (yyyy-mm-dd)", confirm=true)
+toDate   = input.time(defval=timestamp("2099-12-31T23:59:59"), title="Backtest TO (yyyy-mm-dd)",   confirm=true)
+
+//================ Helpers
+sharesForUnit(_equity, _Nentry) =>
+    riskDollars   = _equity * (riskPct/100.0)
+    perShareRisk  = math.max(stopN * _Nentry, syminfo.mintick)
+    math.max(1, math.floor(riskDollars / perShareRisk))
+
+// Only trade inside the selected date window
+inRange = (time >= fromDate) and (time <= toDate)
+
+// Force-flat option at the first in-range bar
+flatAtFrom = input.bool(true, "Force FLAT at range start?")
+isRangeStart = (time[1] < fromDate) and (time >= fromDate)
+
+// If a prior position exists when the window begins, close it so P&L starts clean
+if flatAtFrom and isRangeStart and strategy.position_size != 0
+    strategy.close_all(comment="Flat at FROM")
+
+
+//================ Core calcs (chart timeframe)
+N        = ta.atr(nLen)
+volMA    = ta.sma(volume, 20)
+liqOK    = volMA >= minVol
+
+// Donchian levels
+donHi    = ta.highest(high, entryLen)
+donLo    = ta.lowest(low,  entryLen)
+donHiPrev= donHi[1]
+donLoPrev= donLo[1]
+
+exitHiPrev = ta.highest(high, exitLen)[1]
+exitLoPrev = ta.lowest(low,  exitLen)[1]
+
+// Market regime (optional)
+mClose = request.security(marketSym, marketTF, close)
+mMA    = request.security(marketSym, marketTF, ta.sma(close, marketLen))
+longRegOK  = not useMarket or (mClose > mMA)
+shortRegOK = not useMarket or (mClose < mMA)
+
+//================ Signals (no lookahead)
+longBreak  = allowLong  and liqOK and longRegOK  and (close > donHiPrev)
+shortBreak = allowShort and liqOK and shortRegOK and (close < donLoPrev)
+
+//================ Position state
+var float N_entry       = na
+var float lastAddLong   = na
+var float lastAddShort  = na
+var int   units         = 0
+var int   barsInPos     = 0
+var bool  wantReenterL  = false
+var bool  wantReenterS  = false
+
+inPos     = strategy.position_size != 0
+inLong    = strategy.position_size > 0
+inShort   = strategy.position_size < 0
+
+if inPos
+    barsInPos += 1
+else
+    barsInPos    := 0
+    units        := 0
+    lastAddLong  := na
+    lastAddShort := na
+    N_entry      := na
+    wantReenterL := false
+    wantReenterS := false
+
+//================ Entries (risk-based sizing, freeze N at entry) — gated by inRange
+if inRange and not inPos and longBreak
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       := 1
+    lastAddLong := close
+
+if inRange and not inPos and shortBreak
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        := 1
+    lastAddShort := close
+
+//================ Add-on logic (every addStepN * N_entry)
+canAddLong  = inRange and inLong  and units < maxUnits and close >= nz(lastAddLong)  + addStepN * N_entry
+canAddShort = inRange and inShort and units < maxUnits and close <= nz(lastAddShort) - addStepN * N_entry
+
+if canAddLong
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       += 1
+    lastAddLong := close
+
+if canAddShort
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        += 1
+    lastAddShort := close
+
+//================ Protective & Donchian exits — attach only inside range
+var float stopL = na
+var float stopS = na
+
+if inRange and inLong
+    initStopL = strategy.position_avg_price - stopN * N_entry
+    stopL     := math.max(initStopL, exitLoPrev)
+    strategy.exit("L-EXIT", from_entry="L", stop=stopL)
+else
+    stopL := na
+
+if inRange and inShort
+    initStopS = strategy.position_avg_price + stopN * N_entry
+    stopS     := math.min(initStopS, exitHiPrev)
+    strategy.exit("S-EXIT", from_entry="S", stop=stopS)
+else
+    stopS := na
+
+//================ Optional time exit — evaluate only inside range
+timeExitTrig = inRange and inPos and (timeExitMode != "None") and (barsInPos >= timeExitBars)
+
+if timeExitTrig
+    if inLong
+        if timeExitMode == "Close"
+            strategy.close("L", comment="Time Exit")
+        else if timeExitMode == "Roll"
+            wantReenterL := true
+            strategy.close("L", comment="Time Exit (Roll)")
+    if inShort
+        if timeExitMode == "Close"
+            strategy.close("S", comment="Time Exit")
+        else if timeExitMode == "Roll"
+            wantReenterS := true
+            strategy.close("S", comment="Time Exit (Roll)")
+
+// Re-enter after Roll only if still inside range and trend condition holds
+if inRange and not inPos and wantReenterL and longRegOK and (close > donHiPrev)
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       := 1
+    lastAddLong := close
+    wantReenterL := false
+
+if inRange and not inPos and wantReenterS and shortRegOK and (close < donLoPrev)
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        := 1
+    lastAddShort := close
+    wantReenterS := false
+
+//================ Alerts (optional) — only fire inside date window
+longEntryCond   = inRange and not inPos and longBreak
+shortEntryCond  = inRange and not inPos and shortBreak
+longAddCond     = inRange and canAddLong
+shortAddCond    = inRange and canAddShort
+longExitCond    = inRange and inLong  and not na(stopL) and close <= stopL
+shortExitCond   = inRange and inShort and not na(stopS) and close >= stopS
+timeExitCond    = inRange and timeExitTrig
+
+alertcondition(longEntryCond,  title="Long Entry",  message="TurtleCore: LONG entry on {{ticker}} ({{interval}})")
+alertcondition(shortEntryCond, title="Short Entry", message="TurtleCore: SHORT entry on {{ticker}} ({{interval}})")
+alertcondition(longAddCond,    title="Long Add",    message="TurtleCore: LONG add-on on {{ticker}} ({{interval}})")
+alertcondition(shortAddCond,   title="Short Add",   message="TurtleCore: SHORT add-on on {{ticker}} ({{interval}})")
+alertcondition(longExitCond,   title="Long Exit",   message="TurtleCore: LONG EXIT on {{ticker}} ({{interval}})")
+alertcondition(shortExitCond,  title="Short Exit",  message="TurtleCore: SHORT EXIT on {{ticker}} ({{interval}})")
+alertcondition(timeExitCond,   title="Time Exit",   message="TurtleCore: TIME EXIT on {{ticker}} ({{interval}})")
+
+//================ Plots
+float dHiPlot = plotDon ? donHi : na
+float dLoPlot = plotDon ? donLo : na
+plot(dHiPlot, "Donchian High", color=color.new(color.blue, 40))
+plot(dLoPlot, "Donchian Low",  color=color.new(color.blue, 40))
+
+plotshape(showSignals and longBreak,  title="Long Breakout",  style=shape.triangleup,   location=location.belowbar, size=size.tiny,  color=color.new(color.green, 0), text="Long")
+plotshape(showSignals and shortBreak, title="Short Breakout", style=shape.triangledown, location=location.abovebar, size=size.tiny,  color=color.new(color.red,   0), text="Short")
+
+plot(showSignals and inLong  ? stopL : na, "Long Stop",  color=color.new(color.red,  0), style=plot.style_linebr)
+plot(showSignals and inShort ? stopS : na, "Short Stop", color=color.new(color.red,  0), style=plot.style_linebr)

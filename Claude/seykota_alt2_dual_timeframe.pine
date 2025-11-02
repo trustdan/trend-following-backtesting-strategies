@@ -1,0 +1,203 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © danieltuckerrust
+// ALTERNATIVE 2: Dual-Timeframe Momentum System
+// THEORY: Only enter when both chart timeframe AND higher timeframe show aligned momentum.
+// This filters out counter-trend trades and improves win rate at the cost of fewer trades.
+// Seykota principle: "The trend is your friend" - trade WITH the bigger picture.
+
+//@version=6
+strategy("Seykota Alt 2: Dual-Timeframe v1.0",
+     overlay=true,
+     initial_capital=100000,
+     commission_type=strategy.commission.percent, commission_value=0.005,
+     default_qty_type=strategy.fixed, default_qty_value=0,
+     pyramiding=10,
+     max_bars_back=5000)
+
+//================ Inputs
+allowLong   = input.bool(true,  "Allow LONGs?")
+allowShort  = input.bool(true,  "Allow SHORTs?")
+
+// Chart timeframe (fast) parameters
+entryLen    = input.int(55,     "Donchian ENTRY (chart TF)",  minval=10)
+exitLen     = input.int(10,     "Donchian EXIT (chart TF)",   minval=5)
+
+// Higher timeframe (slow) confirmation
+htfEnabled  = input.bool(true,  "Require HTF confirmation?")
+htfTimeframe= input.timeframe("W", "Higher timeframe")
+htfMaLen    = input.int(50,     "HTF trend MA length",        minval=10)
+htfMaType   = input.string("EMA", "HTF MA type", options=["SMA", "EMA"])
+
+// Additional momentum filter on chart TF
+momentumLen = input.int(20,     "Chart TF momentum length",   minval=5)
+momentumThresh= input.float(0,  "Momentum threshold",         minval=-10, maxval=10, step=0.5)
+
+nLen        = input.int(20,     "N = ATR length",             minval=5)
+stopN       = input.float(2.0,  "Initial stop (in N)",        minval=0.5, step=0.25)
+addStepN    = input.float(0.5,  "Add every X * N",            minval=0.25, step=0.25)
+maxUnits    = input.int(4,      "Max units",                  minval=1, maxval=10)
+riskPct     = input.float(1.0,  "Risk % per unit",            minval=0.1, maxval=5, step=0.1)
+
+useMarket   = input.bool(false, "Use market regime filter?")
+marketSym   = input.symbol("SPY", "Market symbol")
+marketTF    = input.timeframe("D", "Regime timeframe")
+marketLen   = input.int(200,    "Market MA length",           minval=50)
+
+minVol      = input.int(0,      "Min 20-bar avg volume",      minval=0)
+showSignals = input.bool(true,  "Plot signals & stops?")
+plotDon     = input.bool(true,  "Plot Donchian bands?")
+
+fromDate = input.time(defval=timestamp("2022-01-01T00:00:00"), title="Backtest FROM")
+toDate   = input.time(defval=timestamp("2099-12-31T23:59:59"), title="Backtest TO")
+
+//================ Helpers
+sharesForUnit(_equity, _Nentry, _stopN) =>
+    riskDollars   = _equity * (riskPct/100.0)
+    perShareRisk  = math.max(_stopN * _Nentry, syminfo.mintick)
+    math.max(1, math.floor(riskDollars / perShareRisk))
+
+inRange = (time >= fromDate) and (time <= toDate)
+flatAtFrom = input.bool(true, "Force FLAT at range start?")
+isRangeStart = (time[1] < fromDate) and (time >= fromDate)
+
+if flatAtFrom and isRangeStart and strategy.position_size != 0
+    strategy.close_all(comment="Flat at FROM")
+
+//================ Core calcs (chart TF)
+N        = ta.atr(nLen)
+volMA    = ta.sma(volume, 20)
+liqOK    = volMA >= minVol
+
+donHi    = ta.highest(high, entryLen)
+donLo    = ta.lowest(low,  entryLen)
+donHiPrev= donHi[1]
+donLoPrev= donLo[1]
+
+exitHiPrev = ta.highest(high, exitLen)[1]
+exitLoPrev = ta.lowest(low,  exitLen)[1]
+
+// Chart timeframe momentum (rate of change)
+momentum = (close - close[momentumLen]) / close[momentumLen] * 100
+
+// Market regime
+mClose = request.security(marketSym, marketTF, close)
+mMA    = request.security(marketSym, marketTF, ta.sma(close, marketLen))
+longRegOK  = not useMarket or (mClose > mMA)
+shortRegOK = not useMarket or (mClose < mMA)
+
+//================ Higher Timeframe Analysis
+htfClose = request.security(syminfo.tickerid, htfTimeframe, close)
+htfMA = htfMaType == "EMA" ? 
+     request.security(syminfo.tickerid, htfTimeframe, ta.ema(close, htfMaLen)) :
+     request.security(syminfo.tickerid, htfTimeframe, ta.sma(close, htfMaLen))
+
+htfBullish = htfClose > htfMA
+htfBearish = htfClose < htfMA
+
+// Combined confirmation logic
+longConfirmed = not htfEnabled or htfBullish
+shortConfirmed = not htfEnabled or htfBearish
+
+momentumLongOK = momentum > momentumThresh
+momentumShortOK = momentum < -momentumThresh
+
+//================ Signals
+longBreak  = allowLong  and liqOK and longRegOK  and longConfirmed  and momentumLongOK  and (close > donHiPrev)
+shortBreak = allowShort and liqOK and shortRegOK and shortConfirmed and momentumShortOK and (close < donLoPrev)
+
+//================ Position state
+var float N_entry       = na
+var float lastAddLong   = na
+var float lastAddShort  = na
+var int   units         = 0
+
+inPos     = strategy.position_size != 0
+inLong    = strategy.position_size > 0
+inShort   = strategy.position_size < 0
+
+if not inPos
+    units        := 0
+    lastAddLong  := na
+    lastAddShort := na
+    N_entry      := na
+
+//================ Entries
+if inRange and not inPos and longBreak
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry, stopN)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       := 1
+    lastAddLong := close
+
+if inRange and not inPos and shortBreak
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry, stopN)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        := 1
+    lastAddShort := close
+
+//================ Add-ons (only if HTF trend still aligned)
+canAddLong  = inRange and inLong  and units < maxUnits and longConfirmed and close >= nz(lastAddLong)  + addStepN * N_entry
+canAddShort = inRange and inShort and units < maxUnits and shortConfirmed and close <= nz(lastAddShort) - addStepN * N_entry
+
+if canAddLong
+    float sh = sharesForUnit(strategy.equity, N_entry, stopN)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       += 1
+    lastAddLong := close
+
+if canAddShort
+    float sh = sharesForUnit(strategy.equity, N_entry, stopN)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        += 1
+    lastAddShort := close
+
+//================ Exits
+var float stopL = na
+var float stopS = na
+
+if inRange and inLong
+    initStopL = strategy.position_avg_price - stopN * N_entry
+    stopL     := math.max(initStopL, exitLoPrev)
+    strategy.exit("L-EXIT", from_entry="L", stop=stopL)
+else
+    stopL := na
+
+if inRange and inShort
+    initStopS = strategy.position_avg_price + stopN * N_entry
+    stopS     := math.min(initStopS, exitHiPrev)
+    strategy.exit("S-EXIT", from_entry="S", stop=stopS)
+else
+    stopS := na
+
+//================ Plots
+// Background color for HTF trend
+htfBgColor = htfEnabled ? (htfBullish ? color.new(color.green, 95) : color.new(color.red, 95)) : na
+bgcolor(htfBgColor, title="HTF Trend")
+
+float dHiPlot = plotDon ? donHi : na
+float dLoPlot = plotDon ? donLo : na
+plot(dHiPlot, "Donchian High", color=color.new(color.blue, 40))
+plot(dLoPlot, "Donchian Low",  color=color.new(color.blue, 40))
+
+plotshape(showSignals and longBreak,  title="Long",  style=shape.triangleup,   location=location.belowbar, size=size.tiny, color=color.green)
+plotshape(showSignals and shortBreak, title="Short", style=shape.triangledown, location=location.abovebar, size=size.tiny, color=color.red)
+
+plot(showSignals and inLong  ? stopL : na, "Long Stop",  color=color.red, style=plot.style_linebr)
+plot(showSignals and inShort ? stopS : na, "Short Stop", color=color.red, style=plot.style_linebr)
+
+// Plot HTF MA on chart for reference
+htfMaPlot = htfEnabled and showSignals ? htfMA : na
+plot(htfMaPlot, "HTF MA", color=color.new(color.purple, 0), linewidth=2)
+
+// Info table
+var table infoTable = table.new(position.top_right, 2, 4, border_width=1)
+if barstate.islast and showSignals
+    table.cell(infoTable, 0, 0, "HTF Trend:", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 0, htfBullish ? "BULLISH" : "BEARISH", text_color=color.white, bgcolor=htfBullish ? color.green : color.red)
+    table.cell(infoTable, 0, 1, "HTF TF:", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 1, htfTimeframe, text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 0, 2, "Momentum:", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 2, str.tostring(momentum, "#.##") + "%", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 0, 3, "Units:", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 3, str.tostring(units), text_color=color.white, bgcolor=color.gray)
