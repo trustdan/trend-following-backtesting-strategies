@@ -1,0 +1,46 @@
+================================================================================
+STATISTICAL ANALYSIS REPORT
+Trend-Following Backtest Data (293 Results)
+================================================================================
+
+DATASET OVERVIEW
+----------------------------------------
+Total backtests: 354
+Profitable: 210 (59.3%)
+Very profitable (>20%): 91 (25.7%)
+Low drawdown (<10%): 162 (45.8%)
+
+TOP SECTORS BY WIN RATE
+----------------------------------------
+Healthcare: 91.2% (31/34)
+Industrials: 88.2% (30/34)
+Consumer_Disc: 82.4% (28/34)
+Technology: 80.4% (41/51)
+Broad_Market: 60.0% (9/15)
+
+TOP STRATEGIES BY WIN RATE
+----------------------------------------
+Alt26: 76.2% (16/21)
+Alt45: 76.2% (16/21)
+Alt43: 76.2% (16/21)
+Baseline: 75.0% (15/20)
+Alt39: 75.0% (15/20)
+
+KEY CORRELATIONS
+----------------------------------------
+Return vs Profit Factor: 0.536
+Return vs Win Rate: 0.587
+Return vs Max Drawdown: -0.358
+
+OUTPUT FILES GENERATED
+----------------------------------------
+  - correlation_matrix.png
+  - feature_importance.csv
+  - feature_importance.png
+  - linear_regression_results.csv
+  - logistic_regression_results.csv
+  - risk_return_scatter.png
+  - sector_performance_boxplot.png
+  - sector_win_rate.png
+  - strategy_performance_boxplot.png
+  - winrate_vs_trades.png

@@ -98,6 +98,39 @@
 
 ---
 
+## 📈 PYTHON VALIDATION SNAPSHOT (Anaconda Run – Nov 2025)
+
+**Dataset refresh:** The Anaconda pipeline ingested **354 cleaned strategy/asset observations** (210 profitable, 91 very profitable, 162 low drawdown). Outputs saved in `analysis-outputs/statistical_outputs/`.
+
+### Logistic regression: odds of profitability (`logistic_regression_results.csv`)
+- **Profit targets matter:** `has_profit_targets` → **4.47×** higher odds of profitability (p ≈ 6.2e-5). Quant proof that Alt10 / Alt43 should stay core.
+- **Pyramiding works:** `has_pyramiding` → **3.96×** higher odds (p ≈ 1.6e-4), backing Alt26 / Alt45 / Alt47 variants.
+- **Stocks beat ETFs:** `asset_type = Stock` → **2.60×** higher odds (p ≈ 0.0015); supports heavier single-name weighting and matches the qualitative ETF drag we saw.
+- **Sector red flags:** Energy (0.16×, p ≈ 0.015), Real Estate (0.10×, p ≈ 0.0028), and Utilities (**0.006×**, p ≈ 3.4e-5) are statistically hostile—reinforces the do-not-trade list.
+
+#### Segmented logistic drill-down (`segmented_models/` snapshots)
+- **Macro model aligns with headline takeaways:** In the all-sectors interaction fit, `sector_Healthcare` stays a clear positive outlier (≈10× odds, p≈0.046) while `sector_Real_Estate` and `sector_Utilities` trend negative (p≈0.053 and p≈0.052). `asset_type = Stock` still matters (≈2.8× odds, p≈0.0016). Sector-by-feature interaction terms remain too noisy to lean on—confidence intervals blow out to extreme values.
+- **Sector-specific regressions surface the same landmines:** Energy strategies running on stocks show materially lower win odds (OR≈0.13, p≈0.019). Financial names are the lone area where adding pyramiding materially helps (OR≈15.1, p≈0.035). Most other sector coefficients stay statistically weak because each sector only carries 15‑51 observations.
+- **Per-strategy fits are unusable right now:** With ~20 trades per strategy, the logistic models hit quasi/complete separation (astronomical coefficients, infinite CIs, p-values pegged at ~1.0). Treat those outputs as diagnostics only until we add regularisation, pool strategies, or expand the data.
+
+### Profit factor drivers (`linear_regression_results.csv` – log-scaled PF)
+- **Win rate is king:** Coefficient **0.0469** (p < 1e-58) → every +1% win rate lifts profit factor ≈ **4.8%**. Optimisation work should prioritise raising win rate.
+- **Overtrading hurts:** `trades` coefficient **-0.00208** (p ≈ 4.1e-4) → +50 additional trades shaves ~9.8% off PF. Size down or filter signals in high-churn regimes.
+- **Sector haircuts:** Utilities (≈ **-49% PF**, p ≈ 1.6e-7) and Real Estate (≈ -28%, p ≈ 0.014) stay toxic; Materials posts a modest +35% uplift (p ≈ 0.035).
+
+### Feature importance (Random Forest, 5-fold CV accuracy ≈ 0.73)
+- **Top signals:** `win_rate_pct`, `max_drawdown_pct`, `trades` dominate. Sector flags—especially `sector_Utilities` and `sector_Real_Estate`—rank above strategy dials.
+- **Strategy traits still count:** Profit-target and pyramiding flags both land in the top 10, beating filters/time exits.
+
+### Descriptive snapshot (`ANALYSIS_REPORT.txt`)
+- Healthcare, Industrials, Consumer Discretionary post **91% / 88% / 82%** win rates respectively; Utilities crawl in at **3%**.
+- Alt26, Alt45, Alt43, Baseline remain the most reliable tiers when reevaluated on the 354-row dataset.
+- Correlation matrix confirms: win rate (+0.592) and profit factor (+0.536) move with returns, max drawdown (-0.362) cuts into them.
+
+**So what:** Quant outputs harden the qualitative stack—profit targets + pyramiding stay mandatory; sector selection is non-negotiable (avoid Utilities/Energy/RE); future optimisation should attack win rate and drawdown simultaneously while capping trade counts.
+
+---
+
 ## 📊 STRATEGY POWER RANKINGS (Overall Performance)
 
 **All 14 Strategies Ranked by Success Rate:**
@@ -214,6 +247,26 @@
 ---
 
 ## 🎯 SECTOR-SPECIFIC STRATEGY RECOMMENDATIONS
+
+### Basket Trading Playbook (Options Baskets)
+
+| Basket / Sector | Primary Pine Script | Backup / Complement | Why it earns the slot | Hard Nos / Notes |
+|-----------------|---------------------|---------------------|-----------------------|------------------|
+| **Broad Market (SPY)** | Alt26 – `alt26.pine` | Alt10 – `alt10.pine` | Fractional pyramiding delivered the top validated SPY result (+33.5% with low DD); classic profit targets remain a simple alternative. | Skip Alt39 for now (SPY bug), and avoid half-size starters like Alt47 on ETFs. |
+| **Tech ETF (QQQ)** | Alt22 – `alt22.pine` | Alt45 – `alt45.pine` | Parabolic SAR captures Nasdaq momentum surges; dual-momentum confirmation is the safety-first backup. | Alt47 under-exposes QQQ; roll positions every 6–10 weeks. |
+| **Tech Stocks (MSFT, GOOGL)** | Alt26 – `alt26.pine` | Alt10 – `alt10.pine` | Fractional scale-outs keep drawdowns <10% while locking profits; profit targets still post 20%+ returns. | Reserve Alt47 for single-name low-DD sleeves only—skip it for baskets. |
+| **Healthcare (UNH, XLV)** | Alt10 – `alt10.pine` | Alt46 – `alt46.pine` | Profit targets remain the consistency king; sector-adaptive Alt46 delivered the record XLV +34.8%. | Keep ETF sizing modest; exclude utilities/real-estate names from the sleeve. |
+| **Consumer Discretionary (AMZN, XLY)** | Alt26 – `alt26.pine` | Alt10 – `alt10.pine` | Fractional pyramiding rides explosive consumer trends; targets give similar returns with easier management. | Alt17/Alt15 are for selective stock picking, not baskets. |
+| **Consumer Defensive (WMT, XLP)** | Alt26 – `alt26.pine` | Turtle Core v2.2 – `turtle-core-v2.2.pine` | Gradual scale-outs keep WMT/DD tight; baseline Donchian still crushes on trending defensives. | XLP stays marginal—size it down or stay stock-only. |
+| **Industrials (CAT, XLI)** | Alt10 – `alt10.pine` | Alt26 – `alt26.pine` | Profit targets deliver 20%+ with 5% DD on CAT; fractional sizing is the smoother backup. | Avoid momentum-gated Alt42 in baskets (caps upside). |
+| **Financials (JPM, XLF)** | Alt10 – `alt10.pine` | Alt26 – `alt26.pine` | Profit targets handle ETF grind; fractional pyramiding aligns with the positive `has_pyramiding` signal from the sector logit. | Alt47/Alt22 add little here—stick to targets plus scaling. |
+| **Communication Services (GOOGL)** | Alt22 – `alt22.pine` | Alt26 – `alt26.pine` | SAR’s adaptive trail shines on GOOGL; fractional pyramid is the dependable fallback. | Hold off on a sector ETF basket until we capture more data. |
+| **Materials / Commodities (FCX)** | Alt17 – `alt17.pine` | Turtle Core v2.2 – `turtle-core-v2.2.pine` | Dual-timeframe filtering tames copper whipsaws better than anything else; the baseline still works if you can stomach 200+ trades. | Profit-target variants (Alt10/Alt26) bleed badly—skip them. |
+| **Real Estate (PLD)** | Alt10 – `alt10.pine` | Alt26 – `alt26.pine` | Profit targets keep PLD productive; fractional sizing maintains PF>2 with ~5% DD. | XLRE ETF remains off-limits—no trend script has passed yet. |
+| **Energy (XOM, XLE)** | _No trend-following winner yet_ | — | Sector logits and every live test show sub-1 odds ratios and persistent underperformance. | Treat as “do not trade” for trend baskets until a mean-reversion build is ready. |
+| **Utilities (DUK, XLU)** | _No trend-following winner yet_ | — | Logistic odds collapse (≈0.006×); every strategy failed in backtests. | Move utilities to non-trend systems; exclude from trend baskets entirely. |
+
+Use this grid as the default roster when you assemble options baskets: lean on the “Primary” script for each sleeve, keep the backup handy for diversification, and hard-pass on sectors where we still lack a dependable trend profile.
 
 ### TECHNOLOGY (MSFT, QQQ)
 **Best Overall:** Alt26 (Fractional Pyramid) - MSFT +16.3% with 4.98% DD

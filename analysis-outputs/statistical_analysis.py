@@ -210,7 +210,13 @@ class TradingAnalysis:
 
         # Prepare data
         model_data = self.df[['is_profitable', 'sector', 'has_profit_targets',
-                              'has_pyramiding', 'asset_type', 'trades']].dropna()
+                              'has_pyramiding', 'asset_type', 'trades']].dropna().copy()
+
+        # Ensure Boolean columns are numeric for statsmodels
+        bool_columns = ['is_profitable', 'has_profit_targets', 'has_pyramiding']
+        for column in bool_columns:
+            if column in model_data.columns:
+                model_data[column] = model_data[column].astype(int)
 
         # Create formula
         formula = 'is_profitable ~ C(sector) + has_profit_targets + has_pyramiding + C(asset_type) + trades'
