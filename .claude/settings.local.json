@@ -31,7 +31,9 @@
       "Bash(do cp pine-scripts/seykota_alt41_sector_adaptive_hybrid.pine \"$sector\")",
       "Bash(do file=\"$dirstrategies/seykota_alt42_momentum_gated_time.pine\")",
       "Bash(then sed -i '159,163s/.*/\\/\\/================ THREE-TIERED EXIT LOGIC (KEY INNOVATION)\\n\\n\\/\\/ Calculate momentum crosses globally (must run on every bar for consistency)\\nrsiCrossUnder = ta.crossunder(rsiValue, rsiMomentumFade)\\nrsiCrossOver = ta.crossover(rsiValue, rsiMomentumFade)\\n\\n\\/\\/ 1. EARLY EXIT: Momentum fades (RSI crosses 50)\\nmomentumFadedLong = isLong and rsiCrossUnder\\nmomentumFadedShort = isShort and rsiCrossOver/' \"$file\")",
-      "Bash(then sed -i '/^\\/\\/ Background color showing exit zones$/,/^        color\\.new(color\\.blue, 95), title=/c\\// Background color showing exit zones\\nexitZoneColor = barsInPosition >= maxExitBars ? color.new(color.red, 85) : barsInPosition >= standardExitBars ? color.new(color.orange, 90) : color.new(color.blue, 95)\\nbgcolor(exitZoneColor, title=\"\"Exit Zone: Red=Force Exit, Orange=Standard, Blue=Early\"\")' \"$file\")"
+      "Bash(then sed -i '/^\\/\\/ Background color showing exit zones$/,/^        color\\.new(color\\.blue, 95), title=/c\\// Background color showing exit zones\\nexitZoneColor = barsInPosition >= maxExitBars ? color.new(color.red, 85) : barsInPosition >= standardExitBars ? color.new(color.orange, 90) : color.new(color.blue, 95)\\nbgcolor(exitZoneColor, title=\"\"Exit Zone: Red=Force Exit, Orange=Standard, Blue=Early\"\")' \"$file\")",
+      "Bash(awk:*)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []

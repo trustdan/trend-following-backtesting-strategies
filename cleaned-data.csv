@@ -312,7 +312,7 @@ XLP,Alt45,4.35,1.171,53.62,14.83,69,Profitable,Yes
 XLY,Alt45,22.01,1.731,62.82,10.99,78,Very Profitable,Yes
 XLRE,Alt45,-7.73,0.568,39.39,11.90,33,Unprofitable,Yes
 XLU,Alt45,-7.46,0.611,36.51,14.24,63,Unprofitable,Yes
-FCX,Alt46,-6.47,,,,,,Unprofitable,Yes
+FCX,Alt46,-6.47,,,,,Unprofitable,Yes
 GOOGL,Alt46,23.19,1.846,54.17,8.06,72,Very Profitable,Yes
 AMZN,Alt46,20.59,1.601,54.00,11.10,100,Very Profitable,Yes
 WMT,Alt46,24.67,2.119,52.46,8.88,61,Very Profitable,Yes
