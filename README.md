@@ -11,21 +11,76 @@
 
 A systematic exploration of 40+ trend-following strategies, documenting the journey from -93% to +40% through iterative learning and optimization.
 
-**New to this repository?** Start with [docs/START_HERE.md](docs/START_HERE.md) for a guided introduction, or dive directly into [DISCOVERIES_AND_LEARNINGS.md](DISCOVERIES_AND_LEARNINGS.md) for comprehensive results from 294 backtests.
+**New to this repository?** Start with [docs/START_HERE.md](docs/START_HERE.md) for a guided introduction, or dive directly into [DISCOVERIES_AND_LEARNINGS.md](DISCOVERIES_AND_LEARNINGS.md) for comprehensive results from 293 validated backtests.
+
+---
+
+## 💡 KEY TAKEAWAYS (293 Validated Backtests Across 21 Securities)
+
+### The Critical Discovery: Strategy Performance is Asset-Dependent
+**What works on SPY often fails elsewhere.** After testing 14 strategies across 21 securities (11 stocks + 10 ETFs), the data reveals that asset characteristics matter more than strategy sophistication. The same strategy can be the best performer on one security and catastrophic on another.
+
+### The Winners: Universal Strategies That Actually Work
+1. **Alt10 (Profit Targets)** - 76.19% success rate (16/21 profitable)
+   - Explicit 3N-6N-9N profit taking = predictable 3-10 week holds
+   - Works on BOTH stocks AND ETFs (rare!)
+   - Best for: Healthcare (UNH +33.1%, XLV +27.7%), broad market (SPY +20.3%, QQQ +22.8%)
+
+2. **Alt45 (Dual-Momentum)** - 66.67% success rate (14/21 profitable)
+   - 2nd most consistent strategy overall
+   - QQQ +29.23%, CAT +28.62%, UNH +27.07%
+   - Best for: Growth stocks with strong momentum
+
+3. **Alt26 (Fractional Pyramid)** - 57.14% success rate (12/21 profitable)
+   - **Best SPY performer** (+33.50% validated)
+   - Lowest drawdowns (MSFT 4.98%, WMT 5.96%)
+   - Scale-out exits (100%→75%→50%→25%)
+
+### The Sector Truth: Some Markets Are Untradeable
+- **Healthcare:** 12/13 strategies profitable (92% success) - **TRADE THIS**
+- **Technology:** 8/10 strategies profitable (80% success) - **TRADE THIS**
+- **Utilities:** 0/14 strategies profitable (0% success) - **AVOID COMPLETELY**
+- **Energy:** 2/10 strategies profitable (20% success) - **AVOID**
+
+### Record-Breaking Performances (All Validated)
+- **Best ETF Result:** XLV Alt46 +34.80% (sector-adaptive parameters)
+- **Lowest Drawdown Ever:** CAT Alt47 3.96% max DD (across all 293 backtests!)
+- **Highest Win Rate:** UNH Alt28 72.22% (legendary quality)
+- **Best Profit Factor:** UNH Alt28 4.809 (exceptional risk/reward)
+
+### Data Quality: 99.74% Validation Rate
+After systematic visual verification of all 388 screenshots:
+- **1 exit bug found** (SPY Alt39 - purple arrows stopped after 2017)
+- **387 results validated** as healthy with proper exit activity
+- **Methodology:** Visual inspection of exit markers throughout 2010-2025
+- See [data-verification-plan.md](data-verification-plan.md) for complete validation protocol
+
+### The Options Trading Insight
+**Not all profitable strategies suit options trading.** Strategies need regular exits (3-12 weeks) to match options expiration. Visual cue: If the equity curve is zoomed (showing only 2010-2012 instead of full timeline), the strategy holds too long for options.
+
+### What Actually Matters (Validated by 293 Backtests)
+1. **Exit optimization > Entry optimization** - Where you get out matters more than where you get in
+2. **Profit targets are essential** - Multi-stage profit taking (3N, 6N, 9N) outperforms trailing-only
+3. **Pyramiding is mandatory** - Single-position strategies catastrophically underperform
+4. **Asset selection trumps strategy selection** - Alt10 on Healthcare beats best strategy on Utilities
+5. **Simplicity beats complexity** - Top performers use 2-3 enhancements, not kitchen-sink approaches
+
+### The Bottom Line for Traders
+**Use Alt10, Alt45, or Alt26 on Healthcare/Technology stocks.** Avoid Utilities and Energy entirely. Test thoroughly on YOUR instruments before live trading - what works on SPY may fail on your ticker.
 
 ---
 
 ## ✅ Project Status: COMPLETED
 
-**294 Backtests Completed** across 14 strategies and 21 securities (11 individual stocks + 10 sector ETFs)
+**293 Valid Backtests** across 14 strategies and 21 securities (1 removed due to exit bug - see [data-verification-plan.md](data-verification-plan.md))
 
 **Key Findings:**
-- **Best Overall Strategy:** Alt10 (Profit Targets) - 76.19% success rate
-- **Best SPY Strategy:** ~~Alt39~~ (INVALIDATED - exit bug detected, see [bug-log.txt](bug-log.txt))
-- **Best XLV Strategy:** Alt46 (Sector Adaptive) - +34.80% return
-- **Lowest Drawdown Ever:** Alt47 CAT - 3.96% max DD
-- **Sector Insight:** Healthcare 12/13 profitable, Utilities 0/14 profitable
-- **Data Quality:** 143+ screenshots validated, 1 bug found (SPY Alt39 only)
+- **Best Overall Strategy:** Alt10 (Profit Targets) - 76.19% success rate (16/21 profitable)
+- **Best SPY Strategy:** Alt26 (Fractional Pyramid) - +33.50% validated result
+- **Best ETF Strategy:** Alt46 (Sector Adaptive) - XLV +34.80% return
+- **Lowest Drawdown Ever:** Alt47 CAT - 3.96% max DD (across all 293 backtests)
+- **Sector Insight:** Healthcare 92% success (12/13), Utilities 0% success (0/14)
+- **Data Quality:** 388 screenshots validated, 387 healthy (99.74%), 1 exit bug found (SPY Alt39)
 
 See [DISCOVERIES_AND_LEARNINGS.md](DISCOVERIES_AND_LEARNINGS.md) for complete analysis.
 

@@ -585,7 +585,7 @@ TOP PERFORMING ETFs
 ================================================================================
 
 ETF,Best_Strategy,Result_%,PF,Win_Rate_%,Max_DD_%,Why_It_Works
-SPY,Alt39,+131.89,1.241,50.72,8.04,BEST SPY RESULT EVER | Age-based targets capture full broad market trends
+SPY,Alt26,+33.50,1.388,50.72,12.45,BEST SPY RESULT | Fractional pyramid very profitable for broad market
 XLV,Alt46,+34.80,2.688,63.08,8.91,BEST XLV RESULT EVER | Sector-adaptive parameters beat Alt43's +34.79%
 XLV,Alt43,+34.79,2.688,63.08,8.91,Previous XLV record | Near-identical to Alt46
 XLV,Alt39,+29.70,2.361,64.29,10.19,HIGHEST ETF WIN RATE (64.29%) | Age-based targets perfect for healthcare
@@ -610,14 +610,14 @@ SUMMARY STATISTICS
 ================================================================================
 
 Metric,Value,Notes
-Total Backtests Completed,294,14 strategies x 21 securities (some missing)
+Total Backtests Completed,293,14 strategies x 21 securities (SPY Alt39 removed due to exit bug)
 Best Single Result,MSFT Alt15 +52.65%,Single position on tech growth
 Best MSFT Regular Strategy,MSFT Alt47 +33.61%,Best MSFT result for multi-position strategies | Momentum-scaled sizing
-Best ETF Result,SPY Alt39 +131.89%,LEGENDARY age-based targets on broad market
-Best XLV Result,XLV Alt46 +34.80%,Sector-adaptive parameters beat Alt43's +34.79% by 0.01%
+Best ETF Result,XLV Alt46 +34.80%,Sector-adaptive parameters beat Alt43's +34.79% by 0.01%
+Best SPY Result,SPY Alt26 +33.50%,Fractional pyramid excellent for broad market
 Best QQQ Result,QQQ Alt45 +29.23%,Dual-momentum confirmation perfect for tech
 Best CAT Result,CAT Alt45 +28.62%,Highest CAT return across all strategies
-Lowest Max Drawdown,CAT Alt47 3.96%,ALL-TIME RECORD across 294 backtests | Beats MSFT Alt26 4.98%
+Lowest Max Drawdown,CAT Alt47 3.96%,ALL-TIME RECORD across 293 valid backtests | Beats MSFT Alt26 4.98%
 Second Lowest Drawdown,PLD Alt47 4.73%,Momentum-scaled sizing provides exceptional risk control
 Worst Single Result,FCX Alt10 -32.21%,Profit targets catastrophic on commodities
 Most Improved Result,FCX Alt39 -4.47%,Improved 27.74% from Alt10's -32.21%
@@ -625,12 +625,12 @@ Highest Profit Factor,UNH Alt28 4.809,Legendary 72.22% win rate
 Second Highest PF,CAT Alt47 3.194,Momentum-scaled sizing exceptional on industrials
 Highest Win Rate,UNH Alt28 72.22%,Highest individual stock across all tests
 Highest ETF Win Rate,XLV Alt39/Alt45 64.29%,Both strategies tie on healthcare ETF
-Best Broad Market,SPY Alt39 +131.89%,Age-based targets capture full SPY trends
+Best Broad Market,SPY Alt26 +33.50%,Fractional pyramid best validated SPY result
 Most Consistent Strategy,Alt10 (76.2%) > Alt45 (66.7%) > Alt46/Alt43/Alt39 (61.9%),Top 4 strategies for reliability
 Worst Strategy,Alt20,95% failure rate (0/19 profitable)
 Best Sector,Healthcare,12 of 13 strategies profitable
 Worst Sector,Utilities,0 of 14 strategies profitable
-Best Options Strategy,Alt10 Alt39 Alt26,Regular exits | Adaptive targeting | Works on stocks and ETFs
+Best Options Strategy,Alt10 Alt26 Alt45,Regular exits | Fractional pyramid | Dual-momentum | Works on stocks and ETFs
 Worst Options Strategy,Alt20,Unusable | 95% failure rate
 
 ================================================================================
