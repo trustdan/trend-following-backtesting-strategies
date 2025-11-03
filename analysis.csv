@@ -255,6 +255,69 @@ Alt42,XLP,-3.50,0.720,36.00,8.90,25,Unprofitable,Yes
 Alt42,XLY,-2.80,0.880,40.00,7.40,27,Unprofitable,Yes
 Alt42,XLRE,-4.20,0.620,30.00,8.10,20,Unprofitable,Yes
 Alt42,XLU,-12.04,0.173,18.18,15.22,22,Very Unprofitable,Yes
+Alt43,FCX,-7.19,0.78,32.26,14.23,62,Unprofitable,Yes
+Alt43,GOOGL,+22.23,1.742,52.86,8.06,70,Very Profitable,Yes
+Alt43,AMZN,+20.34,1.594,54.00,11.10,100,Very Profitable,Yes
+Alt43,WMT,+24.25,2.099,51.67,8.87,60,Very Profitable,Yes
+Alt43,XOM,-8.32,0.74,37.50,14.57,56,Unprofitable,Yes
+Alt43,JPM,+1.64,0.994,51.52,10.51,66,Scratch,Yes
+Alt43,UNH,+30.92,2.193,56.92,7.32,65,Excellent,Yes
+Alt43,CAT,+27.24,1.706,60.32,11.01,63,Very Profitable,Yes
+Alt43,PLD,+20.87,2.851,58.82,5.32,51,Very Profitable,Yes
+Alt43,MSFT,+26.31,2.085,52.00,8.23,75,Very Profitable,Yes
+Alt43,DUK,-12.58,0.559,36.36,19.93,55,Unprofitable,Yes
+Alt43,SPY,+17.72,1.397,48.24,11.15,85,Profitable,Yes
+Alt43,QQQ,+23.14,1.51,54.17,8.38,96,Very Profitable,Yes
+Alt43,XLE,+4.92,1.179,44.64,14.36,56,Profitable,Yes
+Alt43,XLF,+1.01,1.059,52.05,11.52,73,Profitable,Yes
+Alt43,XLV,+34.79,2.688,63.08,8.91,65,RECORD BREAKING,Yes
+Alt43,XLI,+2.91,1.038,46.27,13.62,67,Profitable,Yes
+Alt43,XLP,+0.39,1.016,51.61,15.11,62,Scratch,Yes
+Alt43,XLY,+21.46,1.686,60.53,11.77,76,Very Profitable,Yes
+Alt43,XLRE,-7.78,0.566,37.50,11.50,32,Unprofitable,Yes
+Alt43,XLU,-3.87,0.703,36.36,13.41,66,Unprofitable,Yes
+Alt44,FCX,+2.13,1.108,40.54,10.58,37,Scratch,Yes
+Alt44,GOOGL,+6.91,1.242,42.22,10.28,45,Profitable,Yes
+Alt44,AMZN,+14.70,1.885,54.24,7.66,59,Profitable,Yes
+Alt44,WMT,+17.04,1.932,60.78,9.41,51,Very Profitable,Yes
+Alt44,XOM,-4.57,0.721,42.42,11.26,33,Unprofitable,Yes
+Alt44,JPM,-0.54,0.964,44.19,7.21,43,Scratch,Yes
+Alt44,UNH,+17.77,12.861,86.67,31.91,30,Legendary,Yes
+Alt44,CAT,+18.83,1.728,58.70,10.44,46,Very Profitable,Yes
+Alt44,PLD,-1.30,0.888,46.15,9.11,26,Unprofitable,Yes
+Alt44,MSFT,+12.67,1.512,50.75,10.51,67,Profitable,Yes
+Alt44,DUK,-15.67,0.014,4.76,15.67,21,Catastrophic,Yes
+Alt44,SPY,+16.13,1.955,55.81,7.43,43,Profitable,Yes
+Alt44,QQQ,-3.44,0.879,42.86,13.79,63,Unprofitable,Yes
+Alt44,XLE,-8.71,0.503,29.41,12.43,34,Unprofitable,Yes
+Alt44,XLF,+4.99,1.362,58.14,9.16,43,Profitable,Yes
+Alt44,XLV,+6.58,1.276,49.02,13.47,51,Profitable,Yes
+Alt44,XLI,+9.25,1.586,50.00,8.04,40,Profitable,Yes
+Alt44,XLP,-12.82,0.159,19.23,12.82,26,Very Unprofitable,Yes
+Alt44,XLY,+5.50,1.518,55.88,5.27,34,Profitable,Yes
+Alt44,XLRE,-7.67,0.000,0.00,7.67,10,Zero Wins,Yes
+Alt44,XLU,-9.48,0.224,23.08,10.71,26,Unprofitable,Yes
+Alt45,FCX,-6.47,0.805,30.16,14.24,63,Unprofitable,Yes
+Alt45,GOOGL,+24.51,1.799,51.47,8.05,68,Very Profitable,Yes
+Alt45,AMZN,+20.29,1.593,53.76,11.76,93,Very Profitable,Yes
+Alt45,WMT,+21.17,1.988,51.67,8.88,60,Very Profitable,Yes
+Alt45,XOM,-6.16,0.809,40.35,14.25,57,Unprofitable,Yes
+Alt45,JPM,+2.08,1.01,50.72,10.51,69,Scratch,Yes
+Alt45,UNH,+27.07,2.05,56.92,7.60,65,Very Profitable,Yes
+Alt45,CAT,+28.62,1.714,58.46,10.43,65,Very Profitable,Yes
+Alt45,PLD,+16.53,2.324,60.42,5.95,48,Very Profitable,Yes
+Alt45,MSFT,+21.02,1.886,54.05,8.61,74,Very Profitable,Yes
+Alt45,DUK,-11.45,0.602,39.66,19.94,58,Unprofitable,Yes
+Alt45,SPY,+15.10,1.32,49.43,10.80,87,Profitable,Yes
+Alt45,QQQ,+29.23,1.635,53.85,8.35,104,Very Profitable,Yes
+Alt45,XLE,+4.30,1.158,45.61,14.70,57,Profitable,Yes
+Alt45,XLF,+4.91,1.202,52.70,9.84,74,Profitable,Yes
+Alt45,XLV,+29.70,2.361,64.29,10.19,70,Very Profitable,Yes
+Alt45,XLI,+0.46,0.957,47.83,13.10,69,Scratch,Yes
+Alt45,XLP,+4.35,1.171,53.62,14.83,69,Profitable,Yes
+Alt45,XLY,+22.01,1.731,62.82,10.99,78,Very Profitable,Yes
+Alt45,XLRE,-7.73,0.568,39.39,11.90,33,Unprofitable,Yes
+Alt45,XLU,-7.46,0.611,36.51,14.24,63,Unprofitable,Yes
 
 ================================================================================
 STRATEGY RANKINGS BY PROFITABLE RATE
@@ -262,8 +325,11 @@ STRATEGY RANKINGS BY PROFITABLE RATE
 
 Strategy,Total_Securities,Very_Profitable,Profitable,Scratch,Unprofitable,Profitable_Rate_%,Tier
 Alt10,21,13,3,1,4,76.19,Elite (Co-Champion)
-Alt26,21,10,2,3,6,57.14,Elite (Co-Champion)
+Alt45,21,10,4,2,5,66.67,Elite (Consistency King)
+Alt43,21,10,3,2,6,61.90,Elite (Stock Specialist)
 Alt39,21,10,3,3,5,61.90,Elite (New Top Tier)
+Alt44,21,4,8,2,7,57.14,Solid
+Alt26,21,10,2,3,6,57.14,Elite (Co-Champion)
 Baseline,20,6,5,5,4,55.00,Solid
 Alt42,21,2,9,2,8,52.38,Solid (Modest Gains)
 Alt15,21,7,2,1,11,42.86,Selective
@@ -491,17 +557,19 @@ SUMMARY STATISTICS
 ================================================================================
 
 Metric,Value,Notes
-Total Backtests Completed,231,11 strategies x 21 securities (some missing)
+Total Backtests Completed,252,12 strategies x 21 securities (some missing)
 Best Single Result,MSFT Alt15 +52.65%,Single position on tech growth
 Best ETF Result,SPY Alt39 +131.89%,LEGENDARY age-based targets on broad market
+Best QQQ Result,QQQ Alt45 +29.23%,Dual-momentum confirmation perfect for tech
+Best CAT Result,CAT Alt45 +28.62%,Highest CAT result across all strategies
 Worst Single Result,FCX Alt10 -32.21%,Profit targets catastrophic on commodities
 Most Improved Result,FCX Alt39 -4.47%,Improved 27.74% from Alt10's -32.21%
 Highest Profit Factor,UNH Alt28 4.809,Legendary 72.22% win rate
 Highest Win Rate,UNH Alt28 72.22%,Highest individual stock across all tests
-Highest ETF Win Rate,XLV Alt39 64.29%,Age-based targets on healthcare ETF
+Highest ETF Win Rate,XLV Alt39/Alt45 64.29%,Both strategies tie on healthcare ETF
 Lowest Max Drawdown,MSFT Alt26 4.98%,Exceptional risk control
 Best Broad Market,SPY Alt39 +131.89%,Age-based targets capture full SPY trends
-Most Consistent Strategy,Alt10 (76%) > Alt39 (67%) > Alt26 (57%),Top 3 strategies for reliability
+Most Consistent Strategy,Alt10 (76.2%) > Alt45 (66.7%) > Alt39/Alt43 (61.9%),Top 3 strategies for reliability
 Worst Strategy,Alt20,95% failure rate (0/19 profitable)
 Best Sector,Healthcare,10 of 11 strategies profitable
 Worst Sector,Utilities,0 of 11 strategies profitable
