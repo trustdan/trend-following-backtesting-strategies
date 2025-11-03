@@ -1,0 +1,151 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © danieltuckerrust
+// ALTERNATIVE 47: Momentum-Scaled Position Sizing
+// THEORY: Start with half position, add other half only when momentum confirms strength
+// - INITIAL ENTRY: 0.5N risk on Donchian breakout (tentative position)
+// - CONFIRMATION ADD: +0.5N if RSI confirms >60 (longs) or <40 (shorts) within 5 bars
+// - EXIT: Alt26's fractional pyramid (100%→75%→50%→25% at 3N-6N-9N-12N)
+// INSIGHT: Many breakouts fail. Starting small limits damage, adding on confirmation captures strong trends.
+// HYPOTHESIS: Reduces losses on false breakouts while still capturing strong moves
+// Expected to improve: All assets (better entry quality), especially commodities/energy (avoid weak breakouts)
+
+//@version=6
+strategy("Seykota Alt 47: Momentum Sized v1.0",
+     overlay=true,
+     initial_capital=100000,
+     commission_type=strategy.commission.percent, commission_value=0.005,
+     slippage=2,
+     default_qty_type=strategy.fixed, default_qty_value=0,
+     pyramiding=10,
+     max_bars_back=5000)
+
+allowLong = input.bool(true, "Allow LONGs?"), allowShort = input.bool(true, "Allow SHORTs?")
+entryLen = input.int(55, "Donchian ENTRY", minval=10), nLen = input.int(20, "N = ATR length", minval=5)
+stopN = input.float(2.0, "Initial stop (N)", minval=0.5, step=0.25)
+trailLen = input.int(22, "Trail lookback", minval=5), trailN = input.float(3.0, "Trail (N)", minval=0.5, step=0.25)
+addStepN = input.float(0.5, "Add every X*N", minval=0.25, step=0.25), maxUnits = input.int(4, "Max units", minval=1, maxval=10)
+riskPct = input.float(1.0, "Risk % per unit", minval=0.1, maxval=5, step=0.1)
+
+// Momentum Confirmation for Scaling
+useMomentumScale = input.bool(true, "Use momentum scaling?")
+initialSize = input.float(0.5, "Initial position size (N)", minval=0.25, maxval=1.0, step=0.25)  // Start with half
+rsiLen = input.int(14, "RSI length", minval=5)
+rsiConfirmLong = input.float(60.0, "RSI confirm long", minval=50, maxval=80)
+rsiConfirmShort = input.float(40.0, "RSI confirm short", minval=20, maxval=50)
+confirmBars = input.int(5, "Bars to wait for confirm", minval=1, maxval=10)
+
+// Fractional Pyramid Targets (from Alt26)
+useFractional = input.bool(true, "Use fractional exits?")
+t1N = input.float(3.0, "T1: Close 25% at (N)", minval=1, step=0.5)
+t2N = input.float(6.0, "T2: Close 25% at (N)", minval=1, step=0.5)
+t3N = input.float(9.0, "T3: Close 25% at (N)", minval=1, step=0.5)
+t4N = input.float(12.0, "T4: Close 25% at (N)", minval=1, step=0.5)
+
+useMarket = input.bool(false, "Use regime filter?"), marketSym = input.symbol("SPY", "Market symbol")
+marketTF = input.timeframe("D", "Regime TF"), marketLen = input.int(200, "Market MA", minval=50)
+minVol = input.int(0, "Min volume", minval=0), showSignals = input.bool(true, "Plot signals?"), plotDon = input.bool(true, "Plot Donchian?")
+fromDate = input.time(defval=timestamp("2022-01-01T00:00:00"), title="FROM", confirm=true)
+toDate = input.time(defval=timestamp("2099-12-31T23:59:59"), title="TO", confirm=true)
+flatAtFrom = input.bool(true, "FLAT at range start?")
+isRangeStart = (time[1] < fromDate) and (time >= fromDate)
+if flatAtFrom and isRangeStart and strategy.position_size != 0
+    strategy.close_all(comment="Flat at FROM")
+
+sharesForUnit(_e, _n, _multiplier) =>
+    r = _e * (riskPct/100.0) * _multiplier  // Multiplier adjusts position size
+    psr = math.max(stopN * _n, syminfo.mintick)
+    math.max(1, math.floor(r / psr))
+
+inRange = (time >= fromDate) and (time <= toDate)
+N = ta.atr(nLen), volMA = ta.sma(volume, 20), liqOK = volMA >= minVol
+donHi = ta.highest(high, entryLen), donLo = ta.lowest(low, entryLen)
+donHiPrev = donHi[1], donLoPrev = donLo[1]
+trailHighest = ta.highest(high, trailLen), trailLowest = ta.lowest(low, trailLen)
+rsi = ta.rsi(close, rsiLen)
+
+mClose = request.security(marketSym, marketTF, close), mMA = request.security(marketSym, marketTF, ta.sma(close, marketLen))
+longRegOK = not useMarket or (mClose > mMA), shortRegOK = not useMarket or (mClose < mMA)
+longBreak = allowLong and liqOK and longRegOK and (close > donHiPrev)
+shortBreak = allowShort and liqOK and shortRegOK and (close < donLoPrev)
+
+var float N_entry = na, var float entryPrice = na, var float lastAddLong = na, var float lastAddShort = na
+var int units = 0, var int barsInPos = 0, var bool confirmedFull = false
+var bool t1 = false, var bool t2 = false, var bool t3 = false, var bool t4 = false
+inPos = strategy.position_size != 0, inLong = strategy.position_size > 0, inShort = strategy.position_size < 0
+
+if inPos
+    barsInPos += 1
+else
+    barsInPos := 0, units := 0, lastAddLong := na, lastAddShort := na, N_entry := na, entryPrice := na
+    confirmedFull := false, t1 := false, t2 := false, t3 := false, t4 := false
+
+// INITIAL ENTRY: Start with HALF position (or user-defined initial size)
+if inRange and not inPos and longBreak
+    N_entry := N, entryPrice := close
+    strategy.entry("L", strategy.long, qty=sharesForUnit(strategy.equity, N_entry, initialSize))
+    units := 1, lastAddLong := close
+if inRange and not inPos and shortBreak
+    N_entry := N, entryPrice := close
+    strategy.entry("S", strategy.short, qty=sharesForUnit(strategy.equity, N_entry, initialSize))
+    units := 1, lastAddShort := close
+
+// MOMENTUM CONFIRMATION: Add remaining half if RSI confirms within X bars
+if useMomentumScale and inLong and not confirmedFull and barsInPos > 0 and barsInPos <= confirmBars
+    if rsi > rsiConfirmLong
+        // Add the other half to complete full position
+        strategy.entry("L", strategy.long, qty=sharesForUnit(strategy.equity, N_entry, 1.0 - initialSize), comment="Confirmed")
+        confirmedFull := true
+
+if useMomentumScale and inShort and not confirmedFull and barsInPos > 0 and barsInPos <= confirmBars
+    if rsi < rsiConfirmShort
+        // Add the other half to complete full position
+        strategy.entry("S", strategy.short, qty=sharesForUnit(strategy.equity, N_entry, 1.0 - initialSize), comment="Confirmed")
+        confirmedFull := true
+
+// Regular pyramiding adds (after initial position is complete)
+if inRange and inLong and confirmedFull and units < maxUnits and high >= nz(lastAddLong) + addStepN * N_entry
+    strategy.entry("L", strategy.long, qty=sharesForUnit(strategy.equity, N_entry, 1.0)), units += 1, lastAddLong := close
+if inRange and inShort and confirmedFull and units < maxUnits and low <= nz(lastAddShort) - addStepN * N_entry
+    strategy.entry("S", strategy.short, qty=sharesForUnit(strategy.equity, N_entry, 1.0)), units += 1, lastAddShort := close
+
+// FRACTIONAL PYRAMID EXITS (Alt26 style)
+if useFractional and inLong and not na(entryPrice) and not na(N_entry)
+    if not t1 and high >= entryPrice + t1N * N_entry
+        strategy.close("L", qty=sharesForUnit(strategy.equity, N_entry, 0.5), comment="T1-25%"), t1 := true
+    if t1 and not t2 and high >= entryPrice + t2N * N_entry
+        strategy.close("L", qty=sharesForUnit(strategy.equity, N_entry, 0.5), comment="T2-25%"), t2 := true
+    if t2 and not t3 and high >= entryPrice + t3N * N_entry
+        strategy.close("L", qty=sharesForUnit(strategy.equity, N_entry, 0.5), comment="T3-25%"), t3 := true
+    if t3 and not t4 and high >= entryPrice + t4N * N_entry
+        strategy.close("L", qty=sharesForUnit(strategy.equity, N_entry, 0.5), comment="T4-25%"), t4 := true
+
+if useFractional and inShort and not na(entryPrice) and not na(N_entry)
+    if not t1 and low <= entryPrice - t1N * N_entry
+        strategy.close("S", qty=sharesForUnit(strategy.equity, N_entry, 0.5), comment="T1-25%"), t1 := true
+    if t1 and not t2 and low <= entryPrice - t2N * N_entry
+        strategy.close("S", qty=sharesForUnit(strategy.equity, N_entry, 0.5), comment="T2-25%"), t2 := true
+    if t2 and not t3 and low <= entryPrice - t3N * N_entry
+        strategy.close("S", qty=sharesForUnit(strategy.equity, N_entry, 0.5), comment="T3-25%"), t3 := true
+    if t3 and not t4 and low <= entryPrice - t4N * N_entry
+        strategy.close("S", qty=sharesForUnit(strategy.equity, N_entry, 0.5), comment="T4-25%"), t4 := true
+
+var float stopL = na, var float stopS = na
+if inRange and inLong
+    stopL := math.round_to_mintick(math.max(entryPrice - stopN * N_entry, trailHighest - trailN * N_entry))
+    strategy.exit("L-EXIT", from_entry="L", stop=stopL)
+else
+    stopL := na
+if inRange and inShort
+    stopS := math.round_to_mintick(math.min(entryPrice + stopN * N_entry, trailLowest + trailN * N_entry))
+    strategy.exit("S-EXIT", from_entry="S", stop=stopS)
+else
+    stopS := na
+
+plot(plotDon ? donHi : na, "DonHi", color=color.new(color.blue, 40))
+plot(plotDon ? donLo : na, "DonLo", color=color.new(color.blue, 40))
+plotshape(showSignals and longBreak, title="L", style=shape.triangleup, location=location.belowbar, size=size.tiny, color=color.new(color.green, 0))
+plotshape(showSignals and shortBreak, title="S", style=shape.triangledown, location=location.abovebar, size=size.tiny, color=color.new(color.red, 0))
+// Color based on confirmation: orange = tentative (initial half), green = confirmed (full position)
+sizeColor = confirmedFull ? color.green : color.orange
+plot(showSignals and inLong ? stopL : na, "Stop", color=color.new(sizeColor, 0), style=plot.style_linebr, linewidth=2)
+plot(showSignals and inShort ? stopS : na, "Stop", color=color.new(sizeColor, 0), style=plot.style_linebr, linewidth=2)

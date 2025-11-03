@@ -1,0 +1,137 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © danieltuckerrust
+// ALTERNATIVE 46: Sector-Adaptive Parameters
+// THEORY: Different asset types need different profit targets based on movement characteristics
+// - INDIVIDUAL STOCKS: Standard 3N-6N-9N (proven Alt10 targets)
+// - ETFs: Wider 4N-7N-10N (slow grinders need time - Alt39's SPY +131% used wide targets)
+// - COMMODITIES/ENERGY: Tighter 2N-4N-6N (mean-reverting, book profits faster)
+// INSIGHT: Alt39's legendary SPY result came from wide targets. One-size-fits-all fails.
+// HYPOTHESIS: Matching targets to asset behavior improves all categories
+// Expected to improve: SPY/QQQ (wide targets), FCX/XOM (tight targets to avoid reversals)
+
+//@version=6
+strategy("Seykota Alt 46: Sector Adaptive v1.0",
+     overlay=true,
+     initial_capital=100000,
+     commission_type=strategy.commission.percent, commission_value=0.005,
+     slippage=2,
+     default_qty_type=strategy.fixed, default_qty_value=0,
+     pyramiding=10,
+     max_bars_back=5000)
+
+allowLong = input.bool(true, "Allow LONGs?"), allowShort = input.bool(true, "Allow SHORTs?")
+entryLen = input.int(55, "Donchian ENTRY", minval=10), nLen = input.int(20, "N = ATR length", minval=5)
+stopN = input.float(2.0, "Initial stop (N)", minval=0.5, step=0.25)
+trailLen = input.int(22, "Trail lookback", minval=5), trailN = input.float(3.0, "Trail (N)", minval=0.5, step=0.25)
+addStepN = input.float(0.5, "Add every X*N", minval=0.25, step=0.25), maxUnits = input.int(4, "Max units", minval=1, maxval=10)
+riskPct = input.float(1.0, "Risk % per unit", minval=0.1, maxval=5, step=0.1)
+
+// Asset Type Selection (user must manually configure based on what they're trading)
+assetType = input.string("Stock", "Asset Type", options=["Stock", "ETF", "Commodity"])
+useTargets = input.bool(true, "Use adaptive targets?")
+
+// Target sets for each asset type
+// STOCKS: Standard Alt10 targets (proven 76% success rate)
+stockT1 = input.float(3.0, "Stock T1 (N)", minval=1, step=0.5)
+stockT2 = input.float(6.0, "Stock T2 (N)", minval=1, step=0.5)
+stockT3 = input.float(9.0, "Stock T3 (N)", minval=1, step=0.5)
+
+// ETFs: Wider targets (Alt39 SPY used 4N-7N-10N for young positions = +131%)
+etfT1 = input.float(4.0, "ETF T1 (N)", minval=1, step=0.5)
+etfT2 = input.float(7.0, "ETF T2 (N)", minval=1, step=0.5)
+etfT3 = input.float(10.0, "ETF T3 (N)", minval=1, step=0.5)
+
+// COMMODITIES: Tighter targets (mean-reverting, book profits fast)
+commT1 = input.float(2.0, "Commodity T1 (N)", minval=1, step=0.5)
+commT2 = input.float(4.0, "Commodity T2 (N)", minval=1, step=0.5)
+commT3 = input.float(6.0, "Commodity T3 (N)", minval=1, step=0.5)
+
+useMarket = input.bool(false, "Use regime filter?"), marketSym = input.symbol("SPY", "Market symbol")
+marketTF = input.timeframe("D", "Regime TF"), marketLen = input.int(200, "Market MA", minval=50)
+minVol = input.int(0, "Min volume", minval=0), showSignals = input.bool(true, "Plot signals?"), plotDon = input.bool(true, "Plot Donchian?")
+fromDate = input.time(defval=timestamp("2022-01-01T00:00:00"), title="FROM", confirm=true)
+toDate = input.time(defval=timestamp("2099-12-31T23:59:59"), title="TO", confirm=true)
+flatAtFrom = input.bool(true, "FLAT at range start?")
+isRangeStart = (time[1] < fromDate) and (time >= fromDate)
+if flatAtFrom and isRangeStart and strategy.position_size != 0
+    strategy.close_all(comment="Flat at FROM")
+
+sharesForUnit(_e, _n) =>
+    r = _e * (riskPct/100.0)
+    psr = math.max(stopN * _n, syminfo.mintick)
+    math.max(1, math.floor(r / psr))
+
+inRange = (time >= fromDate) and (time <= toDate)
+N = ta.atr(nLen), volMA = ta.sma(volume, 20), liqOK = volMA >= minVol
+donHi = ta.highest(high, entryLen), donLo = ta.lowest(low, entryLen)
+donHiPrev = donHi[1], donLoPrev = donLo[1]
+trailHighest = ta.highest(high, trailLen), trailLowest = ta.lowest(low, trailLen)
+mClose = request.security(marketSym, marketTF, close), mMA = request.security(marketSym, marketTF, ta.sma(close, marketLen))
+longRegOK = not useMarket or (mClose > mMA), shortRegOK = not useMarket or (mClose < mMA)
+longBreak = allowLong and liqOK and longRegOK and (close > donHiPrev)
+shortBreak = allowShort and liqOK and shortRegOK and (close < donLoPrev)
+
+var float N_entry = na, var float entryPrice = na, var float lastAddLong = na, var float lastAddShort = na
+var int units = 0, var bool t1 = false, var bool t2 = false, var bool t3 = false
+inPos = strategy.position_size != 0, inLong = strategy.position_size > 0, inShort = strategy.position_size < 0
+if not inPos
+    units := 0, lastAddLong := na, lastAddShort := na, N_entry := na, entryPrice := na, t1 := false, t2 := false, t3 := false
+
+if inRange and not inPos and longBreak
+    N_entry := N, entryPrice := close, strategy.entry("L", strategy.long, qty=sharesForUnit(strategy.equity, N_entry))
+    units := 1, lastAddLong := close
+if inRange and not inPos and shortBreak
+    N_entry := N, entryPrice := close, strategy.entry("S", strategy.short, qty=sharesForUnit(strategy.equity, N_entry))
+    units := 1, lastAddShort := close
+
+if inRange and inLong and units < maxUnits and high >= nz(lastAddLong) + addStepN * N_entry
+    strategy.entry("L", strategy.long, qty=sharesForUnit(strategy.equity, N_entry)), units += 1, lastAddLong := close
+if inRange and inShort and units < maxUnits and low <= nz(lastAddShort) - addStepN * N_entry
+    strategy.entry("S", strategy.short, qty=sharesForUnit(strategy.equity, N_entry)), units += 1, lastAddShort := close
+
+// SELECT TARGETS BASED ON ASSET TYPE
+var float activeT1 = na, var float activeT2 = na, var float activeT3 = na
+if assetType == "Stock"
+    activeT1 := stockT1, activeT2 := stockT2, activeT3 := stockT3
+else if assetType == "ETF"
+    activeT1 := etfT1, activeT2 := etfT2, activeT3 := etfT3
+else if assetType == "Commodity"
+    activeT1 := commT1, activeT2 := commT2, activeT3 := commT3
+
+// Apply selected targets
+if useTargets and inLong and not na(entryPrice) and not na(N_entry)
+    if not t1 and high >= entryPrice + activeT1 * N_entry
+        strategy.close("L", qty=sharesForUnit(strategy.equity, N_entry), comment="T1"), t1 := true
+    if t1 and not t2 and high >= entryPrice + activeT2 * N_entry
+        strategy.close("L", qty=sharesForUnit(strategy.equity, N_entry), comment="T2"), t2 := true
+    if t2 and not t3 and high >= entryPrice + activeT3 * N_entry
+        strategy.close("L", qty=sharesForUnit(strategy.equity, N_entry), comment="T3"), t3 := true
+
+if useTargets and inShort and not na(entryPrice) and not na(N_entry)
+    if not t1 and low <= entryPrice - activeT1 * N_entry
+        strategy.close("S", qty=sharesForUnit(strategy.equity, N_entry), comment="T1"), t1 := true
+    if t1 and not t2 and low <= entryPrice - activeT2 * N_entry
+        strategy.close("S", qty=sharesForUnit(strategy.equity, N_entry), comment="T2"), t2 := true
+    if t2 and not t3 and low <= entryPrice - activeT3 * N_entry
+        strategy.close("S", qty=sharesForUnit(strategy.equity, N_entry), comment="T3"), t3 := true
+
+var float stopL = na, var float stopS = na
+if inRange and inLong
+    stopL := math.round_to_mintick(math.max(entryPrice - stopN * N_entry, trailHighest - trailN * N_entry))
+    strategy.exit("L-EXIT", from_entry="L", stop=stopL)
+else
+    stopL := na
+if inRange and inShort
+    stopS := math.round_to_mintick(math.min(entryPrice + stopN * N_entry, trailLowest + trailN * N_entry))
+    strategy.exit("S-EXIT", from_entry="S", stop=stopS)
+else
+    stopS := na
+
+plot(plotDon ? donHi : na, "DonHi", color=color.new(color.blue, 40))
+plot(plotDon ? donLo : na, "DonLo", color=color.new(color.blue, 40))
+plotshape(showSignals and longBreak, title="L", style=shape.triangleup, location=location.belowbar, size=size.tiny, color=color.new(color.green, 0))
+plotshape(showSignals and shortBreak, title="S", style=shape.triangledown, location=location.abovebar, size=size.tiny, color=color.new(color.red, 0))
+// Color based on asset type: green = stock, blue = ETF, orange = commodity
+typeColor = assetType == "Stock" ? color.green : (assetType == "ETF" ? color.blue : color.orange)
+plot(showSignals and inLong ? stopL : na, "Stop", color=color.new(typeColor, 0), style=plot.style_linebr, linewidth=2)
+plot(showSignals and inShort ? stopS : na, "Stop", color=color.new(typeColor, 0), style=plot.style_linebr, linewidth=2)

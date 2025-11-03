@@ -11,7 +11,22 @@
 
 A systematic exploration of 40+ trend-following strategies, documenting the journey from -93% to +40% through iterative learning and optimization.
 
-**New to this repository?** Start with [START_HERE.md](START_HERE.md) for a guided introduction to the sector testing workflow.
+**New to this repository?** Start with [docs/START_HERE.md](docs/START_HERE.md) for a guided introduction, or dive directly into [DISCOVERIES_AND_LEARNINGS.md](DISCOVERIES_AND_LEARNINGS.md) for comprehensive results from 294 backtests.
+
+---
+
+## ✅ Project Status: COMPLETED
+
+**294 Backtests Completed** across 14 strategies and 21 securities (11 individual stocks + 10 sector ETFs)
+
+**Key Findings:**
+- **Best Overall Strategy:** Alt10 (Profit Targets) - 76.19% success rate
+- **Best SPY Strategy:** Alt39 (Adaptive Targets) - +131.89% return
+- **Best XLV Strategy:** Alt46 (Sector Adaptive) - +34.80% return
+- **Lowest Drawdown Ever:** Alt47 CAT - 3.96% max DD
+- **Sector Insight:** Healthcare 12/13 profitable, Utilities 0/14 profitable
+
+See [DISCOVERIES_AND_LEARNINGS.md](DISCOVERIES_AND_LEARNINGS.md) for complete analysis.
 
 ---
 
@@ -34,20 +49,94 @@ This project represents a systematic human-AI collaboration for discovering robu
 
 ### 2. Manual Testing in TradingView
 
-**Process:** For each AI-generated strategy, I:
-1. Copied the Pine Script code from AI into TradingView's Pine Editor
-2. Applied it to the target security (initially SPY Daily, later 21 different securities across 11 sectors)
-3. Ran the strategy tester with standardized settings:
-   - **Initial Capital:** $100,000
-   - **Commission:** 0.005% (0.5 basis points)
-   - **Slippage:** 2 ticks
-   - **Backtest Period:** Varied by security (typically 2010-2025 for maximum data)
+**Process Overview:** For each AI-generated strategy, I tested it across all 21 securities using an optimized workflow that dramatically reduced testing time.
 
-**Why Manual Testing:**
-- TradingView's visual backtest interface reveals insights automated testing misses
-- Equity curve shape matters (smooth vs choppy)
-- Zoom level indicates exit frequency (critical for options traders - see screenshot guide)
-- Trade distribution across time shows robustness
+#### Code Transfer Workflow (Cursor + Vim)
+
+I used **Cursor** (a VS Code fork) with **Vim keybindings** for lightning-fast code copying:
+
+1. Open Pine Script file in Cursor
+2. Click anywhere in the file
+3. Press `gg` to jump to the top
+4. Press `Shift+V` to enter Visual Line mode (selects entire line)
+5. Press `G` (uppercase) to extend selection to the bottom of the file
+6. Press `Ctrl+C` to copy (standard Windows clipboard)
+7. Alt+Tab to TradingView
+8. Paste into Pine Editor
+
+**Why This Matters:** The entire code selection process takes <2 seconds. No mouse dragging, no scroll-and-shift-click, just muscle memory keystrokes.
+
+#### Date Range Selection (One-Time Setup Per Strategy)
+
+When first loading a new Pine Script strategy in TradingView:
+
+1. TradingView prompts for backtest date range
+2. I selected dates with my mouse:
+   - **Start Date:** Beginning of 2010 (roughly January 2010)
+   - **End Date:** November 1, 2025 (current date at time of testing)
+3. This range was locked in for that strategy session
+
+**Critical Optimization:** Once the strategy and date range were configured, TradingView **remembered these settings**. This meant I could systematically test all 21 securities without having to:
+- Re-select the Pine Script strategy for each ticker
+- Re-enter the date range for each ticker
+- Manually configure any other strategy settings
+
+#### Ticker Switching Workflow (The Speed Secret)
+
+After setting up one strategy with its date range, testing all 21 securities became extremely fast:
+
+1. **Alt+Tab** to TradingView (from documentation/screenshot workflow)
+2. Start typing the next ticker symbol (e.g., "M", "S", "F", "T")
+3. TradingView automatically opens the ticker search bar
+4. TradingView automatically recognizes whether I'm searching for:
+   - Individual stock (MSFT, GOOGL, AMZN, etc.)
+   - ETF (SPY, QQQ, XLV, XLE, etc.)
+5. Press **Enter** to load the ticker
+6. Strategy immediately runs on the new security with same date range
+7. Review results, capture screenshot (see below)
+8. Repeat for next ticker
+
+**Time Savings:** This workflow reduced per-ticker testing from ~2-3 minutes (if reconfiguring each time) to ~15-30 seconds. Testing all 21 securities for one strategy went from 40-60 minutes to approximately 5-10 minutes.
+
+**Example Workflow for Alt47:**
+- Load Alt47 Pine Script, set 2010-2025 date range
+- Type "FCX" + Enter → Test → Screenshot
+- Type "GOOGL" + Enter → Test → Screenshot
+- Type "AMZN" + Enter → Test → Screenshot
+- ... (18 more securities)
+- Complete all 21 tests in <10 minutes
+
+#### Screenshot Capture Workflow
+
+For every backtest result:
+
+1. Strategy runs and displays results in TradingView
+2. Press **Win + Shift + S** (Windows Snipping Tool)
+3. Draw selection box around Strategy Tester panel
+4. Screenshot auto-saves to Windows Photos folder with timestamp
+5. Later: Navigate to Photos folder, move screenshots to sector folders
+6. Rename to descriptive format: `alt[X]-[result]_reduced.png`
+
+**PowerShell Size Reduction:** After capturing batches of screenshots, I ran [resize_images.ps1](resize_images.ps1) to reduce them by 35% (to 65% of original size). This was necessary because TradingView's high-resolution screenshots often exceeded Claude Code's image processing limits.
+
+#### Standardized Backtest Settings
+
+Every test used identical parameters:
+- **Initial Capital:** $100,000
+- **Commission:** 0.005% (0.5 basis points)
+- **Slippage:** 2 ticks
+- **Backtest Period:** ~2010-2025 (approximately 15 years of data)
+
+#### Why Manual Testing Over Automation
+
+Despite the manual workflow, this approach provided advantages automated testing couldn't:
+- **Visual equity curve analysis:** Smooth vs choppy growth patterns immediately visible
+- **Zoom level indicators:** TradingView auto-zooms when exits are rare (critical warning sign for options traders)
+- **Trade distribution patterns:** Clustering of trades reveals market regime sensitivity
+- **Drawdown visualization:** Shape and frequency of drawdowns matter, not just max DD number
+- **Quick pattern recognition:** Human brain excels at spotting visual anomalies across hundreds of charts
+
+**Result:** 294 backtests completed across 14 strategies and 21 securities with high-quality visual documentation of every result.
 
 ### 3. Project Infrastructure via Claude Code
 

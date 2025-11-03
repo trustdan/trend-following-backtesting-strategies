@@ -158,9 +158,13 @@ if isShort and unitCount < maxUnits
 
 //================ THREE-TIERED EXIT LOGIC (KEY INNOVATION)
 
+// Calculate momentum crosses globally (must run on every bar for consistency)
+rsiCrossUnder = ta.crossunder(rsiValue, rsiMomentumFade)
+rsiCrossOver = ta.crossover(rsiValue, rsiMomentumFade)
+
 // 1. EARLY EXIT: Momentum fades (RSI crosses 50)
-momentumFadedLong = isLong and ta.crossunder(rsiValue, rsiMomentumFade)
-momentumFadedShort = isShort and ta.crossover(rsiValue, rsiMomentumFade)
+momentumFadedLong = isLong and rsiCrossUnder
+momentumFadedShort = isShort and rsiCrossOver
 
 if momentumFadedLong
     strategy.close_all(comment="Momentum Fade L")
@@ -234,6 +238,5 @@ if barstate.islast and showSignals and strategy.position_size != 0
     momentumLabel := label.new(bar_index, low, momentumText, color=momentumColor, textcolor=color.white, style=label.style_label_up)
 
 // Background color showing exit zones
-bgcolor(barsInPosition >= maxExitBars ? color.new(color.red, 85) :
-        barsInPosition >= standardExitBars ? color.new(color.orange, 90) :
-        color.new(color.blue, 95), title="Exit Zone: Red=Force Exit, Orange=Standard, Blue=Early")
+exitZoneColor = barsInPosition >= maxExitBars ? color.new(color.red, 85) : barsInPosition >= standardExitBars ? color.new(color.orange, 90) : color.new(color.blue, 95)
+bgcolor(exitZoneColor, title="Exit Zone: Red=Force Exit, Orange=Standard, Blue=Early")

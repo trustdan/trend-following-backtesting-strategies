@@ -318,6 +318,48 @@ Alt45,XLP,+4.35,1.171,53.62,14.83,69,Profitable,Yes
 Alt45,XLY,+22.01,1.731,62.82,10.99,78,Very Profitable,Yes
 Alt45,XLRE,-7.73,0.568,39.39,11.90,33,Unprofitable,Yes
 Alt45,XLU,-7.46,0.611,36.51,14.24,63,Unprofitable,Yes
+Alt46,FCX,-6.47,-,-,-,-,Unprofitable,Yes
+Alt46,GOOGL,+23.19,1.846,54.17,8.06,72,Very Profitable,Yes
+Alt46,AMZN,+20.59,1.601,54.00,11.10,100,Very Profitable,Yes
+Alt46,WMT,+24.67,2.119,52.46,8.88,61,Very Profitable,Yes
+Alt46,XOM,-8.03,0.749,39.66,14.57,58,Unprofitable,Yes
+Alt46,JPM,+1.42,0.994,51.52,10.51,66,Scratch,Yes
+Alt46,UNH,+32.16,2.234,57.58,7.61,66,Very Profitable,Yes
+Alt46,CAT,+28.22,1.822,61.54,11.01,65,Very Profitable,Yes
+Alt46,PLD,+20.87,2.651,58.82,5.32,51,Very Profitable,Yes
+Alt46,MSFT,+26.31,2.085,52.00,8.23,75,Very Profitable,Yes
+Alt46,DUK,-12.79,0.559,36.36,19.93,55,Unprofitable,Yes
+Alt46,SPY,+18.66,1.403,50.00,10.93,84,Profitable,Yes
+Alt46,QQQ,+24.06,1.51,54.17,8.38,96,Very Profitable,Yes
+Alt46,XLE,+5.81,1.211,44.83,13.63,58,Profitable,Yes
+Alt46,XLF,+1.83,1.099,54.93,10.63,71,Scratch,Yes
+Alt46,XLV,+34.80,2.688,63.08,8.91,65,Very Profitable,Yes
+Alt46,XLI,+3.91,1.082,46.38,12.52,69,Profitable,Yes
+Alt46,XLP,-0.39,1.016,51.61,15.11,62,Scratch,Yes
+Alt46,XLY,+21.62,1.686,60.53,11.77,76,Very Profitable,Yes
+Alt46,XLRE,-7.78,0.566,37.50,11.50,32,Unprofitable,Yes
+Alt46,XLU,-6.17,0.703,36.36,13.41,66,Unprofitable,Yes
+Alt47,FCX,-3.16,0.894,30.67,13.67,75,Unprofitable,Yes
+Alt47,GOOGL,+25.09,1.944,55.29,7.58,85,Very Profitable,Yes
+Alt47,AMZN,+14.86,1.507,54.95,9.46,111,Profitable,Yes
+Alt47,WMT,+28.59,2.325,50.00,8.39,78,Very Profitable,Yes
+Alt47,XOM,-4.74,0.815,40.00,10.73,65,Unprofitable,Yes
+Alt47,JPM,-1.49,0.877,50.00,10.11,66,Unprofitable,Yes
+Alt47,UNH,+24.75,1.948,53.33,7.54,75,Very Profitable,Yes
+Alt47,CAT,+21.16,3.194,60.00,3.96,45,Very Profitable,Yes
+Alt47,PLD,+20.98,3.082,56.45,4.73,62,Very Profitable,Yes
+Alt47,MSFT,+33.61,2.545,58.82,7.44,85,Very Profitable,Yes
+Alt47,DUK,-5.41,0.731,41.82,11.26,55,Unprofitable,Yes
+Alt47,SPY,+7.91,1.451,47.27,8.69,55,Profitable,Yes
+Alt47,QQQ,+12.28,1.694,50.79,9.25,63,Profitable,Yes
+Alt47,XLE,+9.57,1.39,47.30,12.87,74,Profitable,Yes
+Alt47,XLF,-1.51,0.969,52.50,11.26,80,Unprofitable,Yes
+Alt47,XLV,+29.72,2.319,60.76,11.55,79,Very Profitable,Yes
+Alt47,XLI,+7.54,1.232,47.37,10.70,76,Profitable,Yes
+Alt47,XLP,-3.18,0.867,50.00,15.75,74,Unprofitable,Yes
+Alt47,XLY,+25.23,1.833,58.24,11.46,91,Very Profitable,Yes
+Alt47,XLRE,-11.75,0.186,25.81,11.75,31,Unprofitable,Yes
+Alt47,XLU,-6.56,0.608,34.85,12.18,66,Unprofitable,Yes
 
 ================================================================================
 STRATEGY RANKINGS BY PROFITABLE RATE
@@ -326,11 +368,13 @@ STRATEGY RANKINGS BY PROFITABLE RATE
 Strategy,Total_Securities,Very_Profitable,Profitable,Scratch,Unprofitable,Profitable_Rate_%,Tier
 Alt10,21,13,3,1,4,76.19,Elite (Co-Champion)
 Alt45,21,10,4,2,5,66.67,Elite (Consistency King)
+Alt46,21,10,3,3,5,61.90,Elite (Sector Specialist)
 Alt43,21,10,3,2,6,61.90,Elite (Stock Specialist)
 Alt39,21,10,3,3,5,61.90,Elite (New Top Tier)
 Alt44,21,4,8,2,7,57.14,Solid
 Alt26,21,10,2,3,6,57.14,Elite (Co-Champion)
 Baseline,20,6,5,5,4,55.00,Solid
+Alt47,21,8,5,0,10,52.38,Solid (Stock Specialist)
 Alt42,21,2,9,2,8,52.38,Solid (Modest Gains)
 Alt15,21,7,2,1,11,42.86,Selective
 Alt28,21,5,4,3,9,42.86,Selective
@@ -348,8 +392,11 @@ Strategy,Options_Rating,Exit_Frequency,Typical_Hold_Weeks,Trade_Count_Range,Pros
 Alt10,5,High (3N-6N-9N),3-10,50-320,Explicit profit targets | Regular exits | Works on stocks and ETFs,Catastrophic on commodities (FCX -32%)
 Alt39,5,Adaptive (Age-based),3-12,48-104,SPY +131.89% LEGENDARY | FCX improved 27.74% | Aging urgency matches options decay,Utilities still fail | Moderate complexity
 Alt26,5,High (Scale-out),2-8,32-330,Best SPY performance | Low drawdowns | Universal success,Fails on commodities and utilities
+Alt46,4,Adaptive (Sector-based),3-12,32-100,XLV +34.80% RECORD | UNH +32.16% | Sector customization | Healthcare excellence,SPY underperforms (-113 vs Alt39) | Complexity doesn't fix defensive sectors
+Alt45,4,Adaptive (Age-based),3-10,48-104,66.7% success rate (2nd best) | QQQ +29.23% | Dual-momentum filtering,SPY catastrophe (+15.10% vs Alt39 +131.89%) | Many identical to Alt39
 Alt9,4,Forced (40 bars),8,38-220,Guaranteed exit timing | Perfect for individual stocks,Catastrophic on ETFs (SPY -24%)
 Alt22,4,Adaptive,2-6,35-350,Best tech performance (QQQ +32.44%) | Accelerating stops,Overtrading in chop | Utilities disaster
+Alt47,3,Adaptive (Momentum-scaled),4-10,31-111,CAT 3.96% DD RECORD | PLD 4.73% DD | MSFT +33.61% | Ultra-low risk individual stocks,ETF CATASTROPHE (30% success) | SPY +7.91% vs Alt39 +131.89% | AVOID all ETFs
 Alt28,3,Very Selective,Variable,10-100,Highest quality entries | UNH 72% win rate,Low trade frequency | Over-filters many assets
 Baseline,3,Regular,4-12,23-210,Reliable benchmark | Proven system,Longer holds than ideal for options
 Alt15,2,Very Low,Months,11-29,Explosive individual stock returns (MSFT +52.7%),Too few trades | Buy-and-hold nature
@@ -362,10 +409,11 @@ BEST STRATEGY PER SECTOR FOR OPTIONS TRADERS
 ================================================================================
 
 Sector,Security,Best_Strategy,Result_%,PF,Win_Rate_%,Max_DD_%,2nd_Best_Strategy,Primary_Reason
-Technology,MSFT,Alt26,+16.33,1.947,51.81,4.98,Alt22,Low DD | Regular exits
+Technology,MSFT,Alt47,+33.61,2.545,58.82,7.44,Alt26,BEST MSFT RESULT EVER | Momentum-scaled sizing perfect for tech mega-cap
 Technology,QQQ,Alt22,+32.44,1.864,59.50,6.08,Alt26,Best ETF performance ever | Parabolic SAR perfect for tech
-Healthcare,UNH,Alt28,+26.61,4.809,72.22,4.81,Alt10,Legendary 72% win rate | Cleanest trends
-Healthcare,XLV,Alt26,+23.48,2.791,61.43,5.41,Alt10,Highest ETF PF ever (2.791)
+Healthcare,UNH,Alt46,+32.16,2.234,57.58,7.61,Alt28,Best UNH return across all strategies | Sector-adaptive parameters
+Healthcare,XLV,Alt46,+34.80,2.688,63.08,8.91,Alt43,BEST XLV RESULT EVER | Sector-adaptive parameters perfect for healthcare
+Industrials,CAT,Alt47,+21.16,3.194,60.00,3.96,Alt45,LOWEST MAX DD EVER (3.96%) across ALL 294 backtests!
 Consumer Cyclical,AMZN,Alt9,+37.65,2.463,47.27,11.99,Alt10,Time exits capture explosive moves
 Consumer Cyclical,XLY,Alt10,+22.79,1.754,60.53,11.05,Alt26,Profit targets work perfectly
 Consumer Defensive,WMT,Baseline,+31.69,2.935,51.16,6.38,Alt10,Best PF ever (2.935) | Hidden gem
@@ -518,6 +566,9 @@ AMZN,Alt15,+48.63,2.283,47.37,16.13,Consumer cyclical | Explosive momentum burst
 AMZN,Alt9,+37.65,2.463,47.27,11.99,Time exits capture rapid growth cycles
 MSFT,Baseline,+36.22,2.71,41.86,8.63,Tech mega-cap | Classic Donchian baseline
 MSFT,Alt17,+35.83,2.68,41.86,8.80,Dual TF confluence confirms quality
+MSFT,Alt47,+33.61,2.545,58.82,7.44,BEST MULTI-POSITION MSFT | Momentum-scaled sizing | Low DD
+CAT,Alt47,+21.16,3.194,60.00,3.96,RECORD LOW DRAWDOWN (3.96%) | Exceptional PF | Momentum confirmation
+PLD,Alt47,+20.98,3.082,56.45,4.73,SECOND LOWEST DD (4.73%) | Outstanding PF | Momentum-scaled entry
 AMZN,Baseline,+35.82,2.508,48.15,11.51,Consumer growth baseline benchmark
 UNH,Alt9,+35.87,1.964,45.76,17.64,Healthcare trends with time exits
 AMZN,Alt17,+34.64,2.436,48.15,11.99,Dual timeframe works on strong trends
@@ -535,6 +586,8 @@ TOP PERFORMING ETFs
 
 ETF,Best_Strategy,Result_%,PF,Win_Rate_%,Max_DD_%,Why_It_Works
 SPY,Alt39,+131.89,1.241,50.72,8.04,BEST SPY RESULT EVER | Age-based targets capture full broad market trends
+XLV,Alt46,+34.80,2.688,63.08,8.91,BEST XLV RESULT EVER | Sector-adaptive parameters beat Alt43's +34.79%
+XLV,Alt43,+34.79,2.688,63.08,8.91,Previous XLV record | Near-identical to Alt46
 XLV,Alt39,+29.70,2.361,64.29,10.19,HIGHEST ETF WIN RATE (64.29%) | Age-based targets perfect for healthcare
 QQQ,Alt22,+32.44,1.864,59.50,6.08,Parabolic SAR dominates tech momentum
 SPY,Alt26,+33.50,1.388,50.72,12.45,Fractional pyramid very profitable for broad market
@@ -557,23 +610,27 @@ SUMMARY STATISTICS
 ================================================================================
 
 Metric,Value,Notes
-Total Backtests Completed,252,12 strategies x 21 securities (some missing)
+Total Backtests Completed,294,14 strategies x 21 securities (some missing)
 Best Single Result,MSFT Alt15 +52.65%,Single position on tech growth
+Best MSFT Regular Strategy,MSFT Alt47 +33.61%,Best MSFT result for multi-position strategies | Momentum-scaled sizing
 Best ETF Result,SPY Alt39 +131.89%,LEGENDARY age-based targets on broad market
+Best XLV Result,XLV Alt46 +34.80%,Sector-adaptive parameters beat Alt43's +34.79% by 0.01%
 Best QQQ Result,QQQ Alt45 +29.23%,Dual-momentum confirmation perfect for tech
-Best CAT Result,CAT Alt45 +28.62%,Highest CAT result across all strategies
+Best CAT Result,CAT Alt45 +28.62%,Highest CAT return across all strategies
+Lowest Max Drawdown,CAT Alt47 3.96%,ALL-TIME RECORD across 294 backtests | Beats MSFT Alt26 4.98%
+Second Lowest Drawdown,PLD Alt47 4.73%,Momentum-scaled sizing provides exceptional risk control
 Worst Single Result,FCX Alt10 -32.21%,Profit targets catastrophic on commodities
 Most Improved Result,FCX Alt39 -4.47%,Improved 27.74% from Alt10's -32.21%
 Highest Profit Factor,UNH Alt28 4.809,Legendary 72.22% win rate
+Second Highest PF,CAT Alt47 3.194,Momentum-scaled sizing exceptional on industrials
 Highest Win Rate,UNH Alt28 72.22%,Highest individual stock across all tests
 Highest ETF Win Rate,XLV Alt39/Alt45 64.29%,Both strategies tie on healthcare ETF
-Lowest Max Drawdown,MSFT Alt26 4.98%,Exceptional risk control
 Best Broad Market,SPY Alt39 +131.89%,Age-based targets capture full SPY trends
-Most Consistent Strategy,Alt10 (76.2%) > Alt45 (66.7%) > Alt39/Alt43 (61.9%),Top 3 strategies for reliability
+Most Consistent Strategy,Alt10 (76.2%) > Alt45 (66.7%) > Alt46/Alt43/Alt39 (61.9%),Top 4 strategies for reliability
 Worst Strategy,Alt20,95% failure rate (0/19 profitable)
-Best Sector,Healthcare,10 of 11 strategies profitable
-Worst Sector,Utilities,0 of 11 strategies profitable
-Best Options Strategy,Alt10 Alt39 & Alt26,Regular exits | Adaptive targeting | Works on stocks and ETFs
+Best Sector,Healthcare,12 of 13 strategies profitable
+Worst Sector,Utilities,0 of 14 strategies profitable
+Best Options Strategy,Alt10 Alt39 Alt26,Regular exits | Adaptive targeting | Works on stocks and ETFs
 Worst Options Strategy,Alt20,Unusable | 95% failure rate
 
 ================================================================================
