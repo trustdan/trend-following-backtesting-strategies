@@ -1,0 +1,257 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © danieltuckerrust
+// ALTERNATIVE 28: Trend Strength Entry Filter (ADX)
+// THEORY: Only enter when ADX indicates strong trending conditions (ADX > 25).
+// This filters out choppy, weak breakouts while keeping all the good trends.
+// INSIGHT FROM BACKTESTS: Alt 16 (anti-chop filters) was unprofitable, but it used
+// multiple complex filters. This uses ONE simple filter (ADX) at entry only.
+// Alt 1 (fast breakout) failed badly with too many whipsaws - ADX could help.
+// Trade-off: Fewer trades (miss some early trends), but higher quality entries.
+
+//@version=6
+strategy("Seykota Alt 28: ADX Filter v1.0",
+     overlay=true,
+     initial_capital=100000,
+     commission_type=strategy.commission.percent, commission_value=0.005,
+     slippage=2,
+     default_qty_type=strategy.fixed, default_qty_value=0,
+     pyramiding=10,
+     max_bars_back=5000)
+
+//================ Inputs
+allowLong   = input.bool(true,  "Allow LONGs?")
+allowShort  = input.bool(true,  "Allow SHORTs?")
+
+entryLen    = input.int(55,     "Donchian ENTRY lookback",            minval=10)
+adxLen      = input.int(14,     "ADX length",                         minval=5)
+adxThreshold= input.float(25.0, "Min ADX for entry",                  minval=10, maxval=50, step=1)
+nLen        = input.int(20,     "N = ATR length",                     minval=5)
+stopN       = input.float(2.0,  "Initial stop (in N)",                minval=0.5, step=0.25)
+trailLen    = input.int(22,     "Chandelier trail lookback",          minval=5)
+trailN      = input.float(3.0,  "Chandelier trail (in N)",            minval=0.5, step=0.25)
+addStepN    = input.float(0.5,  "Add every X * N",                    minval=0.25, step=0.25)
+maxUnits    = input.int(4,      "Max units (incl. initial)",          minval=1, maxval=10)
+riskPct     = input.float(1.0,  "Risk % of equity PER UNIT",          minval=0.1, maxval=5, step=0.1)
+
+// Profit targets
+useTargets   = input.bool(true,  "Use profit targets?")
+target1N     = input.float(3.0,  "Target 1 (in N) - Close 1 unit",    minval=1, step=0.5)
+target2N     = input.float(6.0,  "Target 2 (in N) - Close 1 unit",    minval=1, step=0.5)
+target3N     = input.float(9.0,  "Target 3 (in N) - Close 1 unit",    minval=1, step=0.5)
+
+useMarket   = input.bool(false, "Use market regime filter?")
+marketSym   = input.symbol("SPY", "Market symbol for regime (if used)")
+marketTF    = input.timeframe("D", "Regime timeframe (if used)")
+marketLen   = input.int(200,    "Market MA length (if used)",         minval=50)
+
+minVol      = input.int(0,      "Min 20-bar avg volume (chart TF)",   minval=0)
+showSignals = input.bool(true,  "Plot signals & stops?")
+plotDon     = input.bool(true,  "Plot Donchian bands?")
+plotADX     = input.bool(true,  "Plot ADX?")
+
+// Date-range filter
+fromDate = input.time(defval=timestamp("2022-01-01T00:00:00"), title="Backtest FROM (yyyy-mm-dd)", confirm=true)
+toDate   = input.time(defval=timestamp("2099-12-31T23:59:59"), title="Backtest TO (yyyy-mm-dd)",   confirm=true)
+flatAtFrom = input.bool(true, "Force FLAT at range start?")
+isRangeStart = (time[1] < fromDate) and (time >= fromDate)
+if flatAtFrom and isRangeStart and strategy.position_size != 0
+    strategy.close_all(comment="Flat at FROM")
+
+//================ Helpers
+sharesForUnit(_equity, _Nentry) =>
+    riskDollars   = _equity * (riskPct/100.0)
+    perShareRisk  = math.max(stopN * _Nentry, syminfo.mintick)
+    math.max(1, math.floor(riskDollars / perShareRisk))
+
+inRange = (time >= fromDate) and (time <= toDate)
+
+//================ Core calcs
+N        = ta.atr(nLen)
+volMA    = ta.sma(volume, 20)
+liqOK    = volMA >= minVol
+
+// ADX calculation for trend strength
+[diPlus, diMinus, adx] = ta.dmi(adxLen, adxLen)
+trendStrong = adx >= adxThreshold
+
+// Donchian levels
+donHi    = ta.highest(high, entryLen)
+donLo    = ta.lowest(low,  entryLen)
+donHiPrev= donHi[1]
+donLoPrev= donLo[1]
+
+// Chandelier levels
+trailHighest = ta.highest(high, trailLen)
+trailLowest  = ta.lowest(low,  trailLen)
+
+// Market regime (optional)
+mClose = request.security(marketSym, marketTF, close)
+mMA    = request.security(marketSym, marketTF, ta.sma(close, marketLen))
+longRegOK  = not useMarket or (mClose > mMA)
+shortRegOK = not useMarket or (mClose < mMA)
+
+//================ Signals (WITH ADX FILTER)
+longBreak  = allowLong  and liqOK and longRegOK  and trendStrong and (close > donHiPrev)
+shortBreak = allowShort and liqOK and shortRegOK and trendStrong and (close < donLoPrev)
+
+//================ Position state
+var float N_entry       = na
+var float entryPrice    = na
+var float lastAddLong   = na
+var float lastAddShort  = na
+var int   units         = 0
+var bool  target1Hit    = false
+var bool  target2Hit    = false
+var bool  target3Hit    = false
+
+inPos     = strategy.position_size != 0
+inLong    = strategy.position_size > 0
+inShort   = strategy.position_size < 0
+
+if not inPos
+    units        := 0
+    lastAddLong  := na
+    lastAddShort := na
+    N_entry      := na
+    entryPrice   := na
+    target1Hit   := false
+    target2Hit   := false
+    target3Hit   := false
+
+//================ Entries
+if inRange and not inPos and longBreak
+    N_entry := N
+    entryPrice := close
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       := 1
+    lastAddLong := close
+
+if inRange and not inPos and shortBreak
+    N_entry := N
+    entryPrice := close
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        := 1
+    lastAddShort := close
+
+//================ Add-ons (NO ADX filter for adds - already in trend)
+canAddLong  = inRange and inLong  and units < maxUnits and high >= nz(lastAddLong)  + addStepN * N_entry
+canAddShort = inRange and inShort and units < maxUnits and low  <= nz(lastAddShort) - addStepN * N_entry
+
+if canAddLong
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       += 1
+    lastAddLong := close
+
+if canAddShort
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        += 1
+    lastAddShort := close
+
+//================ PROFIT TARGETS
+if useTargets and inLong and not na(entryPrice) and not na(N_entry)
+    target1Price = entryPrice + target1N * N_entry
+    target2Price = entryPrice + target2N * N_entry
+    target3Price = entryPrice + target3N * N_entry
+
+    if not target1Hit and high >= target1Price
+        float closeQty = sharesForUnit(strategy.equity, N_entry)
+        strategy.close("L", qty=closeQty, comment="T1")
+        target1Hit := true
+
+    if target1Hit and not target2Hit and high >= target2Price
+        float closeQty = sharesForUnit(strategy.equity, N_entry)
+        strategy.close("L", qty=closeQty, comment="T2")
+        target2Hit := true
+
+    if target2Hit and not target3Hit and high >= target3Price
+        float closeQty = sharesForUnit(strategy.equity, N_entry)
+        strategy.close("L", qty=closeQty, comment="T3")
+        target3Hit := true
+
+if useTargets and inShort and not na(entryPrice) and not na(N_entry)
+    target1Price = entryPrice - target1N * N_entry
+    target2Price = entryPrice - target2N * N_entry
+    target3Price = entryPrice - target3N * N_entry
+
+    if not target1Hit and low <= target1Price
+        float closeQty = sharesForUnit(strategy.equity, N_entry)
+        strategy.close("S", qty=closeQty, comment="T1")
+        target1Hit := true
+
+    if target1Hit and not target2Hit and low <= target2Price
+        float closeQty = sharesForUnit(strategy.equity, N_entry)
+        strategy.close("S", qty=closeQty, comment="T2")
+        target2Hit := true
+
+    if target2Hit and not target3Hit and low <= target3Price
+        float closeQty = sharesForUnit(strategy.equity, N_entry)
+        strategy.close("S", qty=closeQty, comment="T3")
+        target3Hit := true
+
+//================ Exits (Chandelier trail)
+var float stopL = na
+var float stopS = na
+
+if inRange and inLong
+    initStopL = entryPrice - stopN * N_entry
+    chandelierL = trailHighest - trailN * N_entry
+    stopL     := math.round_to_mintick(math.max(initStopL, chandelierL))
+    strategy.exit("L-EXIT", from_entry="L", stop=stopL)
+else
+    stopL := na
+
+if inRange and inShort
+    initStopS = entryPrice + stopN * N_entry
+    chandelierS = trailLowest + trailN * N_entry
+    stopS     := math.round_to_mintick(math.min(initStopS, chandelierS))
+    strategy.exit("S-EXIT", from_entry="S", stop=stopS)
+else
+    stopS := na
+
+//================ Plots
+float dHiPlot = plotDon ? donHi : na
+float dLoPlot = plotDon ? donLo : na
+plot(dHiPlot, "Donchian High", color=color.new(color.blue, 40))
+plot(dLoPlot, "Donchian Low",  color=color.new(color.blue, 40))
+
+// Plot ADX in separate panel
+hline(plotADX ? adxThreshold : na, "ADX Threshold", color=color.gray, linestyle=hline.style_dashed)
+plot(plotADX ? adx : na, "ADX", color=color.new(color.purple, 0), linewidth=2)
+
+// Highlight strong trend zones
+bgcolor(trendStrong ? color.new(color.green, 95) : na, title="Strong Trend")
+
+plotshape(showSignals and longBreak,  title="Long Breakout",  style=shape.triangleup,   location=location.belowbar, size=size.tiny,  color=color.new(color.green, 0), text="Long")
+plotshape(showSignals and shortBreak, title="Short Breakout", style=shape.triangledown, location=location.abovebar, size=size.tiny,  color=color.new(color.red,   0), text="Short")
+
+plot(showSignals and inLong  ? stopL : na, "Stop",  color=color.new(color.red, 0), style=plot.style_linebr, linewidth=2)
+plot(showSignals and inShort ? stopS : na, "Stop", color=color.new(color.red, 0), style=plot.style_linebr, linewidth=2)
+
+// Info table
+var table infoTable = table.new(position.top_right, 2, 6, border_width=1)
+if barstate.islast and showSignals
+    table.cell(infoTable, 0, 0, "Strategy:", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 0, "ADX Filter", text_color=color.white, bgcolor=color.purple)
+
+    table.cell(infoTable, 0, 1, "Current ADX:", text_color=color.white, bgcolor=color.gray)
+    adxColor = trendStrong ? color.green : color.red
+    table.cell(infoTable, 1, 1, str.tostring(math.round(adx, 1)), text_color=color.white, bgcolor=adxColor)
+
+    table.cell(infoTable, 0, 2, "ADX Threshold:", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 2, str.tostring(adxThreshold), text_color=color.white, bgcolor=color.gray)
+
+    table.cell(infoTable, 0, 3, "Trend Strength:", text_color=color.white, bgcolor=color.gray)
+    trendText = trendStrong ? "STRONG" : "Weak"
+    table.cell(infoTable, 1, 3, trendText, text_color=color.white, bgcolor=adxColor)
+
+    table.cell(infoTable, 0, 4, "Targets Hit:", text_color=color.white, bgcolor=color.gray)
+    targetsHit = (target1Hit ? "1 " : "") + (target2Hit ? "2 " : "") + (target3Hit ? "3" : "")
+    targetsText = targetsHit != "" ? targetsHit : "None"
+    table.cell(infoTable, 1, 4, targetsText, text_color=color.white, bgcolor=color.gray)
+
+    table.cell(infoTable, 0, 5, "Units:", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 5, str.tostring(units) + "/" + str.tostring(maxUnits), text_color=color.white, bgcolor=color.gray)

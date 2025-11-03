@@ -1,7 +1,22 @@
 {
   "permissions": {
     "allow": [
-      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"c:\\Users\\Dan\\pine-scripts\\rename_scripts.ps1\")"
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"c:\\Users\\Dan\\pine-scripts\\rename_scripts.ps1\")",
+      "Bash(tree:*)",
+      "Bash(dir:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(for sector in basic-materials communication-services consumer-cyclical consumer-defensive energy financial healthcare industrials real-estate technology utilities)",
+      "Bash(do)",
+      "Bash(echo:*)",
+      "Bash(done)",
+      "Bash(find:*)",
+      "Bash(__NEW_LINE__ echo \"Archived old iteration files\")",
+      "Bash(__NEW_LINE__ echo \"Archived old folders\")",
+      "Bash(nul)",
+      "Bash(findstr:*)",
+      "Bash(powershell:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

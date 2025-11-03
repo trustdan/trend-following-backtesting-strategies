@@ -1,6 +1,38 @@
+```
+    ___________                   __   ___________      .__  .__                .__
+    \__    ___/______  ____   ____/  |_ \_   _____/____  |  | |  |   ______  _  _|__| ____    ____
+      |    |  \_  __ \_/ __ \ /    \   __\|    __)/  _ \ |  | |  |  /  _ \ \/ \/ /  |/    \  / ___\
+      |    |   |  | \/\  ___/|   |  \  |  |     \(  <_> )|  |_|  |_(  <_> )     /|  |   |  \/ /_/  >
+      |____|   |__|    \___  >___|  /__|  \___  / \____/ |____/____/\____/ \/\_/ |__|___|  /\___  /
+                           \/     \/          \/                                         \//_____/
+```
+
 # Trend Following Strategy Development Project
 
 A systematic exploration of 40+ trend-following strategies, documenting the journey from -93% to +40% through iterative learning and optimization.
+
+**New to this repository?** Start with [START_HERE.md](START_HERE.md) for a guided introduction to the sector testing workflow.
+
+## 📂 Repository Structure
+
+```
+trend-following-backtesting-strategies/
+├── START_HERE.md                    ← Begin here for sector testing guide
+├── README.md                        ← You are here (project overview)
+├── pine-scripts/                    ← All 40+ TradingView strategy files
+├── sectors/                         ← Sector-by-sector testing results
+│   ├── technology/
+│   ├── healthcare/
+│   ├── energy/
+│   └── ... (11 sectors total)
+├── resize_images.ps1                ← Utility to manage screenshot sizes
+└── Documentation files:
+    ├── DISCOVERIES_AND_LEARNINGS.md    ← Document your findings
+    ├── SECTOR_TESTING_WORKFLOW.md      ← Detailed testing methodology
+    ├── FINAL_10_STRATEGIES.md          ← Why these 10 for sector testing
+    ├── STREAMLINED_TESTING_GUIDE.md    ← Complete testing protocol
+    └── ... (additional guides)
+```
 
 ## 🏆 The Champions
 
@@ -172,11 +204,35 @@ Understanding what doesn't work is as important as knowing what does:
 
 ## 🚀 Getting Started
 
-### For Live Trading
-**Recommended strategies (in order):**
-1. **Alt 31** - Best overall performance, smoothest equity curve
-2. **Alt 38** - Highest profit factor, slightly more aggressive
-3. **Alt 34** - Excellent risk-adjusted returns
+### For Traders New to This Repository
+
+**Start here if you want to:**
+
+1. **Use These Strategies for Trading** → Read [START_HERE.md](START_HERE.md) then test on YOUR instruments
+   - Don't assume Alt 31 works on everything (it doesn't!)
+   - Test the 10 representative strategies on your target tickers
+   - Follow the 4-phase protocol to find what works for YOU
+
+2. **Learn From the Research** → Read the complete strategy analysis:
+   - This README for overview and top performers
+   - [DISCOVERIES_AND_LEARNINGS.md](DISCOVERIES_AND_LEARNINGS.md) for detailed findings
+   - Individual .pine files to see implementation details
+
+3. **Replicate the Study** → All strategies and methodology are documented:
+   - 40+ TradingView Pine Script files in [pine-scripts/](pine-scripts/)
+   - Testing methodology in [SECTOR_TESTING_WORKFLOW.md](SECTOR_TESTING_WORKFLOW.md)
+   - Screenshot evidence in [sectors/](sectors/) folder
+
+4. **Contribute Your Findings** → Test additional sectors/instruments:
+   - Follow the testing protocol
+   - Document your results
+   - Share discoveries with the community
+
+### For Live Trading (SPY Only - Validated)
+**Recommended strategies for SPY (in order):**
+1. **Alt 31** - Best overall performance, smoothest equity curve (PF: 1.474)
+2. **Alt 38** - Highest profit factor, slightly more aggressive (PF: 1.466)
+3. **Alt 34** - Excellent risk-adjusted returns (PF: 1.396)
 
 All three strategies have:
 - Similar low drawdowns (~12.5%)
@@ -184,19 +240,22 @@ All three strategies have:
 - Profit factors >1.39
 - Proven performance across bull/bear markets (2022-2025)
 
+**⚠️ Important:** These results are specific to SPY. Test thoroughly on other instruments before live trading.
+
 ### For Further Development
 **Promising areas to explore:**
-- Test on other instruments (QQQ, IWM, individual stocks)
-- Portfolio approach (multiple instruments simultaneously)
-- Parameter optimization for top 3 strategies
+- Complete sector testing across all market segments
+- Identify sector-specific strategy patterns
+- Parameter optimization for top strategies per sector
 - Walk-forward analysis for robustness testing
 - Different timeframes (4-hour, weekly)
+- Portfolio approach with sector-appropriate strategies
 
-**Avoid these dead ends:**
+**Avoid these dead ends (learned the hard way):**
 - Fast breakout periods (<40 bars)
 - Single-position approaches
 - Complex adaptive entry systems
-- Alternative trailing stop methods
+- Alternative trailing stop methods (Parabolic SAR, etc.)
 - Excessive filtering (ADX, regime, anti-chop)
 
 ---
@@ -225,11 +284,88 @@ Net negative strategies kept for educational purposes. Study these to understand
 
 ---
 
+## 🧪 Sector Testing Methodology
+
+### The Discovery
+After extensive testing on SPY, a critical insight emerged: **strategy performance is highly dependent on the underlying asset's characteristics.** What works brilliantly on SPY may fail on individual stocks or sector ETFs.
+
+### The Solution
+A systematic sector testing framework to discover which strategies work for which market segments:
+
+1. **10 Representative Strategies Selected** - Chosen to test different hypotheses (not just performance tiers):
+   - Baseline (Classic Turtle)
+   - Alt 2 (EMA Crossover - different entry)
+   - Alt 9 (Time Exit - different exit philosophy)
+   - Alt 10 (Profit Targets - early profit taking)
+   - Alt 15 (Single Position - no pyramiding)
+   - Alt 17 (Dual Timeframe - confluence)
+   - Alt 20 (Asymmetric - long/short bias)
+   - Alt 22 (Parabolic SAR - adaptive exits)
+   - Alt 26 (Fractional Pyramid - smart sizing)
+   - Alt 28 (ADX Filter - trend strength)
+
+2. **11 Market Sectors Covered**:
+   - ETFs (QQQ, XLE, XLU)
+   - Technology, Healthcare, Energy
+   - Financials, Industrials, Utilities
+   - Consumer Cyclical/Defensive
+   - Communication Services, Real Estate, Basic Materials
+
+3. **4-Phase Testing Protocol** (~15 min per ticker):
+   - Phase 1: Foundation (Baseline, Alt 15, Alt 26)
+   - Phase 2: Entry Filters (Alt 2, Alt 28, Alt 17)
+   - Phase 3: Exit Optimizations (Alt 10, Alt 22, Alt 9)
+   - Phase 4: Special Cases (Alt 20)
+
+### Expected Outcomes
+- Identify universal strategies (work across many tickers)
+- Identify sector-specific strategies (niche edges)
+- Discover trend-friendly vs difficult sectors
+- Build strategy-sector matching decision tree
+
+---
+
+## 🛠️ Repository Utilities
+
+### Image Resize Script
+To manage screenshot file sizes efficiently, a PowerShell utility is included:
+
+**[resize_images.ps1](resize_images.ps1)** - Automatically resize screenshots by 35%
+- Recursively finds all PNG/JPG images
+- Reduces to 65% of original dimensions
+- Adds `_reduced` suffix to processed files
+- Skips already-reduced images (prevents recursive resizing)
+- Deletes original large files
+- High-quality bicubic interpolation
+
+**Usage:**
+```powershell
+.\resize_images.ps1
+```
+
+This helps keep the repository size manageable when storing hundreds of backtest screenshots across multiple sectors.
+
+---
+
 ## 📚 Documentation
 
-- **[LESSONS_LEARNED.md](LESSONS_LEARNED.md)** - Comprehensive analysis of all 40 strategies with detailed insights
-- **[RENAME_PLAN.md](RENAME_PLAN.md)** - File organization system and ranking methodology
-- **Individual .pine files** - TradingView Pine Script implementations of each strategy
+### Getting Started
+- **[START_HERE.md](START_HERE.md)** - Quick start guide for sector testing (read this first!)
+- **[STREAMLINED_TESTING_GUIDE.md](STREAMLINED_TESTING_GUIDE.md)** - Complete testing methodology
+- **[QUICK_REFERENCE_10_STRATEGIES.md](QUICK_REFERENCE_10_STRATEGIES.md)** - Print-friendly strategy reference card
+
+### Strategy Analysis
+- **[FINAL_10_STRATEGIES.md](FINAL_10_STRATEGIES.md)** - Why these 10 strategies were selected for sector testing
+- **[DISCOVERIES_AND_LEARNINGS.md](DISCOVERIES_AND_LEARNINGS.md)** - Document findings as you test
+
+### Sector Testing
+- **[SECTOR_TESTING_WORKFLOW.md](SECTOR_TESTING_WORKFLOW.md)** - Detailed sector testing workflow
+- **[SECTOR_TICKERS.md](SECTOR_TICKERS.md)** - Recommended tickers for each sector (2-3 per sector)
+- **[QUICK_TEST_CHECKLIST.md](QUICK_TEST_CHECKLIST.md)** - Testing checklist
+
+### Original SPY Research
+- **Individual .pine files** - TradingView Pine Script implementations (40+ strategies)
+- **sectors/etfs/** - Original SPY backtest results and screenshots
 
 ---
 
@@ -265,6 +401,31 @@ Top strategies proved robust across all these environments, demonstrating true t
 
 ---
 
+## 🖼️ Reading Backtest Screenshots
+
+### Critical Warning: Zoom-Level Indicates Exit Frequency
+
+When reviewing backtest screenshots, **the equity curve's X-axis time range is extremely revealing**:
+
+**Full Timeline (1993-2025):**
+- Strategy has regular exits throughout the backtest period
+- Equity curve shows complete P&L history
+- Total P&L (left) matches equity curve endpoint (right)
+- ✅ **Suitable for options traders who need frequent exits**
+
+**Zoomed Timeline (e.g., 2010-2012 only):**
+- Strategy has **very few exits** - TradingView auto-zooms to where trades occurred
+- Equity curve only shows small portion of backtest
+- Total P&L (left) includes **unrealized gains from long-held positions**
+- Equity curve endpoint (right) shows value at zoom endpoint, NOT final value
+- ❌ **NOT suitable for options traders - positions held too long**
+
+**Example:** Alt 6 Pure ATR Stop shows +$282K Total P&L but -$15K equity at chart end. The equity curve is zoomed to 2010-2012 (early losing period) because the strategy holds positions without exiting from 2013-2025. Those unrealized gains inflate the Total P&L but aren't visible on the zoomed chart.
+
+**For Options Traders:** Immediately discard any strategy screenshot with a zoomed equity curve. You need strategies that close positions regularly, which will show full timeline equity curves.
+
+---
+
 ## ⚠️ Disclaimer
 
 **This is educational research, not investment advice.**
@@ -279,35 +440,102 @@ Top strategies proved robust across all these environments, demonstrating true t
 
 ## 🔄 Project Status
 
-**Current Phase:** Ready for live paper trading
+**Current Phase:** Multi-Sector Testing & Analysis
 
 **Completed:**
-- ✅ 40 strategy variations tested
+- ✅ 40 strategy variations tested on SPY
 - ✅ 3 complete iterations
 - ✅ Comprehensive documentation
 - ✅ Clear performance rankings
-- ✅ Golden Combo identified
+- ✅ Golden Combo identified (Alt 31)
+- ✅ Sector testing framework developed
+- ✅ Image management utilities created
+
+**Recent Discovery:** Alt 31 works great on SPY but may fail on other tickers. This critical finding led to the development of a systematic sector testing workflow to discover which strategies work for which market segments.
+
+**Current Focus:**
+1. Testing 10 representative strategies across all market sectors
+2. Identifying sector-specific strategy performance patterns
+3. Building strategy-sector matching system
+4. Documenting findings for the trading community
 
 **Next Steps:**
-1. Begin paper trading with Alt 31 and Alt 38
-2. Parameter optimization on top performers
-3. Walk-forward analysis for robustness
-4. Test on additional instruments
-5. Develop multi-instrument portfolio approach
+1. Complete sector testing (Technology, Healthcare, Energy, Utilities, etc.)
+2. Develop sector-optimized strategy variants
+3. Create strategy selector based on ticker characteristics
+4. Begin paper trading with sector-appropriate strategies
+5. Walk-forward analysis for robustness validation
 
 ---
 
 ## 📞 Contact & Contributions
 
-This is a personal research project documenting a systematic approach to trend-following strategy development. The methodology and results are shared for educational purposes.
+This is an **open research project** documenting a systematic approach to trend-following strategy development. The methodology and results are shared for educational purposes.
 
-**Key Takeaway:** Through systematic testing and learning from failures, strategy performance improved by 97% over 3 iterations, proving that disciplined experimentation and honest evaluation are more valuable than guru predictions.
+### How Other Traders Can Use This Research
+
+**1. Direct Application:**
+- Clone/download the repository
+- Test strategies on your instruments using TradingView
+- Use the [SECTOR_TESTING_WORKFLOW.md](SECTOR_TESTING_WORKFLOW.md) as your guide
+- Document your findings in the appropriate sector folders
+
+**2. Learn From the Process:**
+- Study the iteration-by-iteration improvement (from -93% to +40%)
+- Understand what works and what fails (and why)
+- Apply the systematic testing methodology to your own strategy ideas
+- Avoid the documented "dead ends"
+
+**3. Contribute Your Findings:**
+If you test these strategies on additional instruments/sectors:
+- Document your results using the provided templates
+- Share screenshots and performance metrics
+- Add insights to [DISCOVERIES_AND_LEARNINGS.md](DISCOVERIES_AND_LEARNINGS.md)
+- Help build the community knowledge base
+
+**4. Build Upon This Work:**
+- Optimize parameters for specific sectors
+- Test on different timeframes
+- Develop sector-specific variants
+- Create automated strategy selectors
+- Share improvements back to the community
+
+### What Makes This Research Valuable
+
+**Transparency:** Every strategy is documented with:
+- Complete Pine Script source code
+- Backtest screenshots
+- Performance metrics
+- Analysis of why it works (or fails)
+
+**Systematic Approach:** Not cherry-picked results:
+- All 40 strategies tested on same timeframe
+- Failures documented alongside successes
+- Clear methodology anyone can replicate
+- Honest evaluation of what doesn't work
+
+**Actionable Insights:** Beyond just "here's a profitable strategy":
+- Understanding of WHY strategies work
+- Knowledge of WHEN they fail
+- Framework for testing YOUR instruments
+- Methodology for continuous improvement
+
+### Key Takeaway
+
+Through systematic testing and learning from failures, strategy performance improved by **97% over 3 iterations** (-93% → +40%), proving that:
+- Disciplined experimentation beats guru predictions
+- Systematic testing reveals hidden patterns
+- Understanding failures is as valuable as celebrating successes
+- Strategy performance is asset-dependent (Alt 31 on SPY ≠ Alt 31 on everything)
+
+**The journey from failure to success is the real value, not just the final strategy.**
 
 ---
 
 *"The goal of a successful trader is to make the best trades. Money is secondary." - Alexander Elder*
 
-**Last Updated:** November 1, 2025
-**Strategies Tested:** 40
-**Success Rate:** 90% (Iteration 3)
-**Best Strategy:** Alt 31 (+40.1%, PF 1.474)
+**Last Updated:** November 2, 2025
+**Strategies Tested:** 40 (SPY); 10 selected for multi-sector testing
+**SPY Success Rate:** 90% (Iteration 3)
+**Best SPY Strategy:** Alt 31 (+40.1%, PF 1.474)
+**Current Phase:** Multi-sector testing to identify strategy-asset matching patterns

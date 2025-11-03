@@ -1,0 +1,278 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © danieltuckerrust
+// ALTERNATIVE 17: Dual Timeframe Confluence
+// THEORY: Require trend alignment across timeframes (daily + weekly) for higher-conviction trades.
+// The baseline trades every daily breakout. But many daily breakouts fail when the higher timeframe
+// is counter-trend. This alternative requires BOTH chart TF breakout AND higher TF confirmation
+// (e.g., weekly close > weekly 26-bar high for longs). This filters out trades that fight the major
+// tide and only takes positions aligned with multi-timeframe momentum.
+// Trade-off: Far fewer entries, but higher-quality trades with improved win rate and larger moves.
+
+//@version=6
+strategy("Seykota Alt 17: Dual TF Confluence v1.0",
+     overlay=true,
+     initial_capital=100000,
+     commission_type=strategy.commission.percent, commission_value=0.005,
+     slippage=2,
+     default_qty_type=strategy.fixed, default_qty_value=0,
+     pyramiding=10,
+     max_bars_back=5000)
+
+//================ Inputs
+allowLong   = input.bool(true,  "Allow LONGs?")
+allowShort  = input.bool(true,  "Allow SHORTs?")
+
+// Chart timeframe parameters
+entryLen    = input.int(55,     "Chart TF: Donchian ENTRY lookback", minval=10)
+exitLen     = input.int(10,     "Chart TF: Donchian EXIT lookback",  minval=5)
+
+// CHANGED: Higher timeframe confirmation parameters
+htfTimeframe = input.timeframe("W", "Higher TF for confirmation")
+htfEntryLen  = input.int(26,    "Higher TF: Donchian lookback",      minval=5)
+htfMethod    = input.string("Breakout", "Higher TF method", options=["Breakout", "MA", "Both"])
+htfMALen     = input.int(50,    "Higher TF: MA length (if used)",    minval=10)
+
+nLen        = input.int(20,     "N = ATR length",                     minval=5)
+stopN       = input.float(2.0,  "Initial stop (in N)",                minval=0.5, step=0.25)
+addStepN    = input.float(0.5,  "Add every X * N",                    minval=0.25, step=0.25)
+maxUnits    = input.int(4,      "Max units (incl. initial)",          minval=1, maxval=10)
+riskPct     = input.float(1.0,  "Risk % of equity PER UNIT",          minval=0.1, maxval=5, step=0.1)
+
+useMarket   = input.bool(false, "Use market regime filter?")
+marketSym   = input.symbol("SPY", "Market symbol for regime (if used)")
+marketTF    = input.timeframe("D", "Regime timeframe (if used)")
+marketLen   = input.int(200,    "Market MA length (if used)",         minval=50)
+
+timeExitMode= input.string("None","Time exit", options=["None","Close","Roll"])
+timeExitBars= input.int(60,     "Time exit bars (if used)",           minval=5)
+
+minVol      = input.int(0,      "Min 20-bar avg volume (chart TF)",   minval=0)
+showSignals = input.bool(true,  "Plot signals & stops?")
+plotDon     = input.bool(true,  "Plot Donchian bands?")
+plotHTF     = input.bool(true,  "Plot higher TF levels?")
+
+// Date-range filter
+fromDate = input.time(defval=timestamp("2022-01-01T00:00:00"), title="Backtest FROM (yyyy-mm-dd)", confirm=true)
+toDate   = input.time(defval=timestamp("2099-12-31T23:59:59"), title="Backtest TO (yyyy-mm-dd)",   confirm=true)
+flatAtFrom = input.bool(true, "Force FLAT at range start?")
+isRangeStart = (time[1] < fromDate) and (time >= fromDate)
+if flatAtFrom and isRangeStart and strategy.position_size != 0
+    strategy.close_all(comment="Flat at FROM")
+
+//================ Helpers
+sharesForUnit(_equity, _Nentry) =>
+    riskDollars   = _equity * (riskPct/100.0)
+    perShareRisk  = math.max(stopN * _Nentry, syminfo.mintick)
+    math.max(1, math.floor(riskDollars / perShareRisk))
+
+inRange = (time >= fromDate) and (time <= toDate)
+
+//================ Chart timeframe calcs
+N        = ta.atr(nLen)
+volMA    = ta.sma(volume, 20)
+liqOK    = volMA >= minVol
+
+// Chart TF Donchian levels
+donHi    = ta.highest(high, entryLen)
+donLo    = ta.lowest(low,  entryLen)
+donHiPrev= donHi[1]
+donLoPrev= donLo[1]
+
+exitHiPrev = ta.highest(high, exitLen)[1]
+exitLoPrev = ta.lowest(low,  exitLen)[1]
+
+//================ HIGHER TIMEFRAME CONFLUENCE
+// Get higher TF data (no lookahead)
+htfClose    = request.security(syminfo.tickerid, htfTimeframe, close, lookahead=barmerge.lookahead_off)
+htfHigh     = request.security(syminfo.tickerid, htfTimeframe, high, lookahead=barmerge.lookahead_off)
+htfLow      = request.security(syminfo.tickerid, htfTimeframe, low, lookahead=barmerge.lookahead_off)
+htfDonHiPrev = request.security(syminfo.tickerid, htfTimeframe, ta.highest(high, htfEntryLen)[1], lookahead=barmerge.lookahead_off)
+htfDonLoPrev = request.security(syminfo.tickerid, htfTimeframe, ta.lowest(low, htfEntryLen)[1], lookahead=barmerge.lookahead_off)
+htfMA       = request.security(syminfo.tickerid, htfTimeframe, ta.sma(close, htfMALen), lookahead=barmerge.lookahead_off)
+
+// Higher TF trend confirmation logic
+htfLongBreakout = htfClose > htfDonHiPrev
+htfShortBreakout = htfClose < htfDonLoPrev
+htfLongMA = htfClose > htfMA
+htfShortMA = htfClose < htfMA
+
+// Combine based on selected method
+htfLongOK = htfMethod == "Breakout" ? htfLongBreakout :
+             htfMethod == "MA" ? htfLongMA :
+             (htfLongBreakout and htfLongMA)  // Both
+
+htfShortOK = htfMethod == "Breakout" ? htfShortBreakout :
+              htfMethod == "MA" ? htfShortMA :
+              (htfShortBreakout and htfShortMA)  // Both
+
+// Market regime (optional)
+mClose = request.security(marketSym, marketTF, close)
+mMA    = request.security(marketSym, marketTF, ta.sma(close, marketLen))
+longRegOK  = not useMarket or (mClose > mMA)
+shortRegOK = not useMarket or (mClose < mMA)
+
+//================ Signals (REQUIRE DUAL TIMEFRAME CONFLUENCE)
+longBreak  = allowLong  and liqOK and longRegOK  and htfLongOK  and (close > donHiPrev)
+shortBreak = allowShort and liqOK and shortRegOK and htfShortOK and (close < donLoPrev)
+
+//================ Position state
+var float N_entry       = na
+var float lastAddLong   = na
+var float lastAddShort  = na
+var int   units         = 0
+var int   barsInPos     = 0
+var bool  wantReenterL  = false
+var bool  wantReenterS  = false
+
+inPos     = strategy.position_size != 0
+inLong    = strategy.position_size > 0
+inShort   = strategy.position_size < 0
+
+if inPos
+    barsInPos += 1
+else
+    barsInPos    := 0
+    units        := 0
+    lastAddLong  := na
+    lastAddShort := na
+    N_entry      := na
+    wantReenterL := false
+    wantReenterS := false
+
+//================ Entries
+if inRange and not inPos and longBreak
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       := 1
+    lastAddLong := close
+
+if inRange and not inPos and shortBreak
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        := 1
+    lastAddShort := close
+
+//================ Add-ons
+canAddLong  = inRange and inLong  and units < maxUnits and close >= nz(lastAddLong)  + addStepN * N_entry
+canAddShort = inRange and inShort and units < maxUnits and close <= nz(lastAddShort) - addStepN * N_entry
+
+if canAddLong
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       += 1
+    lastAddLong := close
+
+if canAddShort
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        += 1
+    lastAddShort := close
+
+//================ Exits
+var float stopL = na
+var float stopS = na
+
+if inRange and inLong
+    initStopL = strategy.position_avg_price - stopN * N_entry
+    stopL     := math.max(initStopL, exitLoPrev)
+    strategy.exit("L-EXIT", from_entry="L", stop=stopL)
+else
+    stopL := na
+
+if inRange and inShort
+    initStopS = strategy.position_avg_price + stopN * N_entry
+    stopS     := math.min(initStopS, exitHiPrev)
+    strategy.exit("S-EXIT", from_entry="S", stop=stopS)
+else
+    stopS := na
+
+//================ Optional time exit
+timeExitTrig = inRange and inPos and (timeExitMode != "None") and (barsInPos >= timeExitBars)
+
+if timeExitTrig
+    if inLong
+        if timeExitMode == "Close"
+            strategy.close("L", comment="Time Exit")
+        else if timeExitMode == "Roll"
+            wantReenterL := true
+            strategy.close("L", comment="Time Exit (Roll)")
+    if inShort
+        if timeExitMode == "Close"
+            strategy.close("S", comment="Time Exit")
+        else if timeExitMode == "Roll"
+            wantReenterS := true
+            strategy.close("S", comment="Time Exit (Roll)")
+
+// Re-enter after Roll
+if inRange and not inPos and wantReenterL and longRegOK and htfLongOK and (close > donHiPrev)
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       := 1
+    lastAddLong := close
+    wantReenterL := false
+
+if inRange and not inPos and wantReenterS and shortRegOK and htfShortOK and (close < donLoPrev)
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        := 1
+    lastAddShort := close
+    wantReenterS := false
+
+//================ Plots
+// Background shading for HTF trend direction
+htfBg = htfLongOK ? color.new(color.green, 97) : (htfShortOK ? color.new(color.red, 97) : color.new(color.gray, 97))
+bgcolor(htfBg, title="Higher TF Trend")
+
+float dHiPlot = plotDon ? donHi : na
+float dLoPlot = plotDon ? donLo : na
+plot(dHiPlot, "Chart TF: Donchian High", color=color.new(color.blue, 40))
+plot(dLoPlot, "Chart TF: Donchian Low",  color=color.new(color.blue, 40))
+
+// Plot higher TF levels
+plot(plotHTF ? htfDonHiPrev : na, "HTF Donchian High", color=color.new(color.purple, 30), linewidth=2, style=plot.style_stepline)
+plot(plotHTF ? htfDonLoPrev : na, "HTF Donchian Low",  color=color.new(color.purple, 30), linewidth=2, style=plot.style_stepline)
+plot(plotHTF and (htfMethod == "MA" or htfMethod == "Both") ? htfMA : na, "HTF MA", color=color.new(color.orange, 0), linewidth=2)
+
+plotshape(showSignals and longBreak,  title="Long",  style=shape.triangleup,   location=location.belowbar, size=size.small, color=color.new(color.green, 0), text="2TF↑")
+plotshape(showSignals and shortBreak, title="Short", style=shape.triangledown, location=location.abovebar, size=size.small, color=color.new(color.red,   0), text="2TF↓")
+
+plot(showSignals and inLong  ? stopL : na, "Long Stop",  color=color.new(color.red, 0), style=plot.style_linebr, linewidth=2)
+plot(showSignals and inShort ? stopS : na, "Short Stop", color=color.new(color.red, 0), style=plot.style_linebr, linewidth=2)
+
+// Info table showing timeframe alignment
+var table infoTable = table.new(position.top_right, 3, 6, border_width=1)
+if barstate.islast and showSignals
+    table.cell(infoTable, 0, 0, "Filter:", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 0, "DUAL TF", text_color=color.white, bgcolor=color.purple)
+    table.cell(infoTable, 2, 0, "", text_color=color.white, bgcolor=color.purple)
+
+    table.cell(infoTable, 0, 1, "Chart TF:", text_color=color.white, bgcolor=color.gray)
+    chartStatus = (close > donHiPrev) ? "Long" : (close < donLoPrev) ? "Short" : "Neutral"
+    chartColor = (close > donHiPrev) ? color.green : (close < donLoPrev) ? color.red : color.gray
+    table.cell(infoTable, 1, 1, chartStatus, text_color=color.white, bgcolor=chartColor)
+    table.cell(infoTable, 2, 1, "", text_color=color.white, bgcolor=chartColor)
+
+    table.cell(infoTable, 0, 2, htfTimeframe + " TF:", text_color=color.white, bgcolor=color.gray)
+    htfStatus = htfLongOK ? "Long" : (htfShortOK ? "Short" : "Neutral")
+    htfColor = htfLongOK ? color.green : (htfShortOK ? color.red : color.gray)
+    table.cell(infoTable, 1, 2, htfStatus, text_color=color.white, bgcolor=htfColor)
+    table.cell(infoTable, 2, 2, "", text_color=color.white, bgcolor=htfColor)
+
+    table.cell(infoTable, 0, 3, "Alignment:", text_color=color.white, bgcolor=color.gray)
+    aligned = (htfLongOK and close > donHiPrev) or (htfShortOK and close < donLoPrev)
+    alignStatus = aligned ? "ALIGNED ✓" : "No Confluence"
+    alignColor = aligned ? color.green : color.red
+    table.cell(infoTable, 1, 3, alignStatus, text_color=color.white, bgcolor=alignColor)
+    table.cell(infoTable, 2, 3, "", text_color=color.white, bgcolor=alignColor)
+
+    table.cell(infoTable, 0, 4, "Method:", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 4, htfMethod, text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 2, 4, "", text_color=color.white, bgcolor=color.gray)
+
+    table.cell(infoTable, 0, 5, "Units:", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 5, str.tostring(units) + "/" + str.tostring(maxUnits), text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 2, 5, "", text_color=color.white, bgcolor=color.gray)

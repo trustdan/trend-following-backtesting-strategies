@@ -1,0 +1,178 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © danieltuckerrust
+
+//@version=6
+strategy("Seykota / Turtle Core v2.2 (compiler-safe)",
+     overlay=true,
+     initial_capital=100000,
+     commission_type=strategy.commission.percent, commission_value=0.005,
+     slippage=0,                               // <-- Must be CONST. Adjust in Properties UI.
+     default_qty_type=strategy.fixed,
+     pyramiding=10,
+     max_bars_back=5000)
+
+//================ Inputs
+allowLong   = input.bool(true,  "Allow LONGs?")
+allowShort  = input.bool(true,  "Allow SHORTs?")
+
+entryLen    = input.int(55,     "Donchian ENTRY lookback", minval=10)
+exitLen     = input.int(10,     "Donchian EXIT lookback",  minval=5)
+nLen        = input.int(20,     "N = ATR length",          minval=5)
+stopN       = input.float(2.0,  "Initial stop (in N)",     minval=0.25, step=0.25)
+addStepN    = input.float(0.5,  "Add every X * N",         minval=0.25, step=0.25)
+maxUnits    = input.int(4,      "Max units (incl. initial)", minval=1, maxval=10)
+riskPct     = input.float(1.0,  "Risk % of equity PER UNIT", minval=0.1, maxval=5, step=0.1)
+
+useMarket   = input.bool(false, "Use market regime filter?")
+marketSym   = input.symbol("SPY", "Market symbol for regime (if used)")
+marketTF    = input.timeframe("D", "Regime timeframe (if used)")
+marketLen   = input.int(200,    "Market MA length (if used)", minval=50)
+marketMA    = input.string("SMA", "Regime MA type", options=["SMA","EMA","WMA"])
+
+timeExitMode= input.string("None","Time exit", options=["None","Close","Roll"])
+timeExitBars= input.int(60,     "Time exit bars (if used)", minval=5)
+
+minVol      = input.int(0,      "Min 20-bar avg volume (chart TF)", minval=0)
+useIntrabarAdds = input.bool(false, "Add-ons use intrabar extremes (High/Low)?")
+useATRGuard = input.bool(false, "Block add-ons when ATR > SMA(ATR, nLen)?")
+
+showSignals = input.bool(true,  "Plot signals & stops?")
+plotDon     = input.bool(true,  "Plot Donchian bands?")
+
+// === Date-range filter (local chart timezone)
+fromDate = input.time(defval=timestamp("2022-01-01T00:00:00"), title="Backtest FROM (yyyy-mm-dd)", confirm=true)
+toDate   = input.time(defval=timestamp("2099-12-31T23:59:59"), title="Backtest TO (yyyy-mm-dd)",   confirm=true)
+flatAtFrom = input.bool(true, "Force FLAT at range start?")
+isFirstBar = na(time[1])
+isRangeStart = (not isFirstBar) and (time[1] < fromDate) and (time >= fromDate)
+if flatAtFrom and isRangeStart and strategy.position_size != 0
+    strategy.close_all(comment="Flat at FROM")
+
+//================ Persistent state
+var float N_entry     = na
+var float lastAddLong = na
+var float lastAddShort= na
+var int   units       = 0
+var int   barsInPos   = 0
+if isRangeStart
+    N_entry       := na
+    lastAddLong   := na
+    lastAddShort  := na
+    units         := 0
+    barsInPos     := 0
+
+//================ Core calcs (chart timeframe)
+N        = ta.atr(nLen)
+atrSmaN  = ta.sma(N, nLen)                  // <-- precomputed (no conditional calls)
+volMA    = ta.sma(volume, 20)
+liqOK    = volMA >= minVol
+
+// Donchian levels
+donHi    = ta.highest(high, entryLen)
+donLo    = ta.lowest(low,  entryLen)
+donHiPrev= donHi[1]
+donLoPrev= donLo[1]
+exitHiPrev = ta.highest(high, exitLen)[1]
+exitLoPrev = ta.lowest(low,  exitLen)[1]
+
+// Market regime (compute ALL MAs; pick later to avoid conditional TA calls)
+mClose = request.security(marketSym, marketTF, close)
+mSMA   = request.security(marketSym, marketTF, ta.sma(close, marketLen))
+mEMA   = request.security(marketSym, marketTF, ta.ema(close, marketLen))
+mWMA   = request.security(marketSym, marketTF, ta.wma(close, marketLen))
+mMA = switch marketMA
+    "EMA" => mEMA
+    "WMA" => mWMA
+    => mSMA
+
+longRegOK  = not useMarket or (mClose > mMA)
+shortRegOK = not useMarket or (mClose < mMA)
+
+//================ Signals (no lookahead)
+longBreak  = allowLong  and liqOK and longRegOK  and (close > donHiPrev)
+shortBreak = allowShort and liqOK and shortRegOK and (close < donLoPrev)
+
+//================ Position state
+inPos   = strategy.position_size != 0
+inLong  = strategy.position_size > 0
+inShort = strategy.position_size < 0
+barsInPos := inPos ? (barsInPos + 1) : 0
+
+//================ Helpers
+sharesForUnit(_equity, _Nentry) =>
+    riskDollars   = _equity * (riskPct/100.0)
+    perShareRisk  = math.max(stopN * _Nentry, syminfo.mintick)
+    math.max(1, math.floor(riskDollars / perShareRisk))
+
+//================ Entries
+inRange = (time >= fromDate) and (time <= toDate)
+
+if inRange and not inPos and longBreak
+    N_entry := N
+    sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       := 1
+    lastAddLong := close
+
+if inRange and not inPos and shortBreak
+    N_entry := N
+    sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        := 1
+    lastAddShort := close
+
+//================ Add-on logic (every addStepN * N_entry)
+priceForLongAdd  = useIntrabarAdds ? high : close
+priceForShortAdd = useIntrabarAdds ? low  : close
+atrGuardOK       = not useATRGuard or (N <= atrSmaN)
+
+canAddLong  = inRange and inLong  and atrGuardOK and (units < maxUnits) and (priceForLongAdd  >= nz(lastAddLong)  + addStepN * N_entry)
+canAddShort = inRange and inShort and atrGuardOK and (units < maxUnits) and (priceForShortAdd <= nz(lastAddShort) - addStepN * N_entry)
+
+if canAddLong
+    sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       += 1
+    lastAddLong := close
+
+if canAddShort
+    sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        += 1
+    lastAddShort := close
+
+//================ Protective & Donchian exits — tick-rounded
+var float stopL = na
+var float stopS = na
+
+if inRange and inLong
+    initStopL = strategy.position_avg_price - stopN * N_entry
+    stopLraw  = math.max(initStopL, exitLoPrev)
+    stopL     := math.round_to_mintick(stopLraw)
+    strategy.exit("L-EXIT", from_entry="L", stop=stopL)
+else
+    stopL := na
+
+if inRange and inShort
+    initStopS = strategy.position_avg_price + stopN * N_entry
+    stopSraw  = math.min(initStopS, exitHiPrev)
+    stopS     := math.round_to_mintick(stopSraw)
+    strategy.exit("S-EXIT", from_entry="S", stop=stopS)
+else
+    stopS := na
+
+//================ Optional time exit
+timeExitTrig = inRange and inPos and (timeExitMode != "None") and (barsInPos >= timeExitBars)
+if timeExitTrig
+    if inLong
+        strategy.close("L", comment=timeExitMode == "Roll" ? "Time Exit (Roll)" : "Time Exit")
+        units := 0
+    if inShort
+        strategy.close("S", comment=timeExitMode == "Roll" ? "Time Exit (Roll)" : "Time Exit")
+        units := 0
+
+//================ Plots
+plot(plotDon ? donHi : na, "Donchian High", color=color.new(color.blue, 40))
+plot(plotDon ? donLo : na, "Donchian Low",  color=color.new(color.blue, 40))
+plot(showSignals and inLong  ? stopL : na, "Long Stop",  color=color.new(color.red,  0), style=plot.style_linebr)
+plot(showSignals and inShort ? stopS : na, "Short Stop", color=color.new(color.red,  0), style=plot.style_linebr)

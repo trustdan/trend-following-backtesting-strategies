@@ -1,0 +1,254 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © danieltuckerrust
+// ALTERNATIVE 26: Fractional Pyramiding
+// THEORY: Instead of equal-sized pyramid adds, use progressively smaller positions (100%, 75%, 50%, 25%).
+// This prevents over-concentration at extended prices while still allowing participation in trends.
+// INSIGHT FROM BACKTESTS: Alt 11 (tapered pyramid) was very unprofitable, but that was inverse
+// (smaller first, larger later). This does the opposite: largest first, smaller adds.
+// Alt 15 (single position) failed badly (-21.8%), so pyramiding clearly helps - but smarter.
+// Trade-off: Reduced late-stage risk, but less upside if trend extends significantly.
+
+//@version=6
+strategy("Seykota Alt 26: Fractional Pyramid v1.0",
+     overlay=true,
+     initial_capital=100000,
+     commission_type=strategy.commission.percent, commission_value=0.005,
+     slippage=2,
+     default_qty_type=strategy.fixed, default_qty_value=0,
+     pyramiding=10,
+     max_bars_back=5000)
+
+//================ Inputs
+allowLong   = input.bool(true,  "Allow LONGs?")
+allowShort  = input.bool(true,  "Allow SHORTs?")
+
+entryLen    = input.int(55,     "Donchian ENTRY lookback",            minval=10)
+nLen        = input.int(20,     "N = ATR length",                     minval=5)
+stopN       = input.float(2.0,  "Initial stop (in N)",                minval=0.5, step=0.25)
+trailLen    = input.int(22,     "Chandelier trail lookback",          minval=5)
+trailN      = input.float(3.0,  "Chandelier trail (in N)",            minval=0.5, step=0.25)
+addStepN    = input.float(0.5,  "Add every X * N",                    minval=0.25, step=0.25)
+maxUnits    = input.int(4,      "Max units (100%, 75%, 50%, 25%)",    minval=1, maxval=10)
+riskPct     = input.float(1.0,  "Risk % for FIRST unit (full size)",  minval=0.1, maxval=5, step=0.1)
+
+// Fractional pyramid multipliers (hard-coded for clarity)
+// Unit 1: 100%, Unit 2: 75%, Unit 3: 50%, Unit 4: 25%
+
+// Profit targets
+useTargets   = input.bool(true,  "Use profit targets?")
+target1N     = input.float(3.0,  "Target 1 (in N) - Close 1 unit",    minval=1, step=0.5)
+target2N     = input.float(6.0,  "Target 2 (in N) - Close 1 unit",    minval=1, step=0.5)
+target3N     = input.float(9.0,  "Target 3 (in N) - Close 1 unit",    minval=1, step=0.5)
+
+useMarket   = input.bool(false, "Use market regime filter?")
+marketSym   = input.symbol("SPY", "Market symbol for regime (if used)")
+marketTF    = input.timeframe("D", "Regime timeframe (if used)")
+marketLen   = input.int(200,    "Market MA length (if used)",         minval=50)
+
+minVol      = input.int(0,      "Min 20-bar avg volume (chart TF)",   minval=0)
+showSignals = input.bool(true,  "Plot signals & stops?")
+plotDon     = input.bool(true,  "Plot Donchian bands?")
+
+// Date-range filter
+fromDate = input.time(defval=timestamp("2022-01-01T00:00:00"), title="Backtest FROM (yyyy-mm-dd)", confirm=true)
+toDate   = input.time(defval=timestamp("2099-12-31T23:59:59"), title="Backtest TO (yyyy-mm-dd)",   confirm=true)
+flatAtFrom = input.bool(true, "Force FLAT at range start?")
+isRangeStart = (time[1] < fromDate) and (time >= fromDate)
+if flatAtFrom and isRangeStart and strategy.position_size != 0
+    strategy.close_all(comment="Flat at FROM")
+
+//================ Helpers
+// Fractional sizing function - returns progressively smaller positions
+sharesForUnit(_equity, _Nentry, _unitNum) =>
+    riskDollars   = _equity * (riskPct/100.0)
+    perShareRisk  = math.max(stopN * _Nentry, syminfo.mintick)
+    baseShares    = math.max(1, math.floor(riskDollars / perShareRisk))
+
+    // Apply fractional multiplier based on unit number
+    fraction = _unitNum == 1 ? 1.0 : (_unitNum == 2 ? 0.75 : (_unitNum == 3 ? 0.5 : 0.25))
+    math.max(1, math.floor(baseShares * fraction))
+
+inRange = (time >= fromDate) and (time <= toDate)
+
+//================ Core calcs
+N        = ta.atr(nLen)
+volMA    = ta.sma(volume, 20)
+liqOK    = volMA >= minVol
+
+// Donchian levels
+donHi    = ta.highest(high, entryLen)
+donLo    = ta.lowest(low,  entryLen)
+donHiPrev= donHi[1]
+donLoPrev= donLo[1]
+
+// Chandelier levels
+trailHighest = ta.highest(high, trailLen)
+trailLowest  = ta.lowest(low,  trailLen)
+
+// Market regime (optional)
+mClose = request.security(marketSym, marketTF, close)
+mMA    = request.security(marketSym, marketTF, ta.sma(close, marketLen))
+longRegOK  = not useMarket or (mClose > mMA)
+shortRegOK = not useMarket or (mClose < mMA)
+
+//================ Signals
+longBreak  = allowLong  and liqOK and longRegOK  and (close > donHiPrev)
+shortBreak = allowShort and liqOK and shortRegOK and (close < donLoPrev)
+
+//================ Position state
+var float N_entry       = na
+var float entryPrice    = na
+var float lastAddLong   = na
+var float lastAddShort  = na
+var int   units         = 0
+var bool  target1Hit    = false
+var bool  target2Hit    = false
+var bool  target3Hit    = false
+
+inPos     = strategy.position_size != 0
+inLong    = strategy.position_size > 0
+inShort   = strategy.position_size < 0
+
+if not inPos
+    units        := 0
+    lastAddLong  := na
+    lastAddShort := na
+    N_entry      := na
+    entryPrice   := na
+    target1Hit   := false
+    target2Hit   := false
+    target3Hit   := false
+
+//================ Entries (FIRST unit at full size)
+if inRange and not inPos and longBreak
+    N_entry := N
+    entryPrice := close
+    float sh = sharesForUnit(strategy.equity, N_entry, 1)  // Unit 1 = 100%
+    strategy.entry("L", strategy.long, qty=sh)
+    units       := 1
+    lastAddLong := close
+
+if inRange and not inPos and shortBreak
+    N_entry := N
+    entryPrice := close
+    float sh = sharesForUnit(strategy.equity, N_entry, 1)  // Unit 1 = 100%
+    strategy.entry("S", strategy.short, qty=sh)
+    units        := 1
+    lastAddShort := close
+
+//================ Add-ons (progressively smaller sizes)
+canAddLong  = inRange and inLong  and units < maxUnits and high >= nz(lastAddLong)  + addStepN * N_entry
+canAddShort = inRange and inShort and units < maxUnits and low  <= nz(lastAddShort) - addStepN * N_entry
+
+if canAddLong
+    float sh = sharesForUnit(strategy.equity, N_entry, units + 1)  // Fractional size based on unit number
+    strategy.entry("L", strategy.long, qty=sh)
+    units       += 1
+    lastAddLong := close
+
+if canAddShort
+    float sh = sharesForUnit(strategy.equity, N_entry, units + 1)  // Fractional size based on unit number
+    strategy.entry("S", strategy.short, qty=sh)
+    units        += 1
+    lastAddShort := close
+
+//================ PROFIT TARGETS
+if useTargets and inLong and not na(entryPrice) and not na(N_entry)
+    target1Price = entryPrice + target1N * N_entry
+    target2Price = entryPrice + target2N * N_entry
+    target3Price = entryPrice + target3N * N_entry
+
+    if not target1Hit and high >= target1Price
+        float closeQty = sharesForUnit(strategy.equity, N_entry, 1)
+        strategy.close("L", qty=closeQty, comment="T1")
+        target1Hit := true
+
+    if target1Hit and not target2Hit and high >= target2Price
+        float closeQty = sharesForUnit(strategy.equity, N_entry, 1)
+        strategy.close("L", qty=closeQty, comment="T2")
+        target2Hit := true
+
+    if target2Hit and not target3Hit and high >= target3Price
+        float closeQty = sharesForUnit(strategy.equity, N_entry, 1)
+        strategy.close("L", qty=closeQty, comment="T3")
+        target3Hit := true
+
+if useTargets and inShort and not na(entryPrice) and not na(N_entry)
+    target1Price = entryPrice - target1N * N_entry
+    target2Price = entryPrice - target2N * N_entry
+    target3Price = entryPrice - target3N * N_entry
+
+    if not target1Hit and low <= target1Price
+        float closeQty = sharesForUnit(strategy.equity, N_entry, 1)
+        strategy.close("S", qty=closeQty, comment="T1")
+        target1Hit := true
+
+    if target1Hit and not target2Hit and low <= target2Price
+        float closeQty = sharesForUnit(strategy.equity, N_entry, 1)
+        strategy.close("S", qty=closeQty, comment="T2")
+        target2Hit := true
+
+    if target2Hit and not target3Hit and low <= target3Price
+        float closeQty = sharesForUnit(strategy.equity, N_entry, 1)
+        strategy.close("S", qty=closeQty, comment="T3")
+        target3Hit := true
+
+//================ Exits (Chandelier trail)
+var float stopL = na
+var float stopS = na
+
+if inRange and inLong
+    initStopL = entryPrice - stopN * N_entry
+    chandelierL = trailHighest - trailN * N_entry
+    stopL     := math.round_to_mintick(math.max(initStopL, chandelierL))
+    strategy.exit("L-EXIT", from_entry="L", stop=stopL)
+else
+    stopL := na
+
+if inRange and inShort
+    initStopS = entryPrice + stopN * N_entry
+    chandelierS = trailLowest + trailN * N_entry
+    stopS     := math.round_to_mintick(math.min(initStopS, chandelierS))
+    strategy.exit("S-EXIT", from_entry="S", stop=stopS)
+else
+    stopS := na
+
+//================ Plots
+float dHiPlot = plotDon ? donHi : na
+float dLoPlot = plotDon ? donLo : na
+plot(dHiPlot, "Donchian High", color=color.new(color.blue, 40))
+plot(dLoPlot, "Donchian Low",  color=color.new(color.blue, 40))
+
+plotshape(showSignals and longBreak,  title="Long Breakout",  style=shape.triangleup,   location=location.belowbar, size=size.tiny,  color=color.new(color.green, 0), text="Long")
+plotshape(showSignals and shortBreak, title="Short Breakout", style=shape.triangledown, location=location.abovebar, size=size.tiny,  color=color.new(color.red,   0), text="Short")
+
+plot(showSignals and inLong  ? stopL : na, "Stop",  color=color.new(color.red, 0), style=plot.style_linebr, linewidth=2)
+plot(showSignals and inShort ? stopS : na, "Stop", color=color.new(color.red, 0), style=plot.style_linebr, linewidth=2)
+
+// Info table
+var table infoTable = table.new(position.top_right, 2, 7, border_width=1)
+if barstate.islast and showSignals
+    table.cell(infoTable, 0, 0, "Strategy:", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 0, "Fractional Pyramid", text_color=color.white, bgcolor=color.purple)
+
+    table.cell(infoTable, 0, 1, "Pyramid Pattern:", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 1, "100%→75%→50%→25%", text_color=color.white, bgcolor=color.gray)
+
+    table.cell(infoTable, 0, 2, "Units:", text_color=color.white, bgcolor=color.gray)
+    table.cell(infoTable, 1, 2, str.tostring(units) + "/" + str.tostring(maxUnits), text_color=color.white, bgcolor=color.gray)
+
+    table.cell(infoTable, 0, 3, "Next Add Size:", text_color=color.white, bgcolor=color.gray)
+    nextFraction = units == 0 ? "100%" : (units == 1 ? "75%" : (units == 2 ? "50%" : "25%"))
+    table.cell(infoTable, 1, 3, nextFraction, text_color=color.white, bgcolor=color.gray)
+
+    table.cell(infoTable, 0, 4, "Target 1:", text_color=color.white, bgcolor=color.gray)
+    t1Color = target1Hit ? color.green : color.gray
+    table.cell(infoTable, 1, 4, target1Hit ? "✓" : str.tostring(target1N) + "N", text_color=color.white, bgcolor=t1Color)
+
+    table.cell(infoTable, 0, 5, "Target 2:", text_color=color.white, bgcolor=color.gray)
+    t2Color = target2Hit ? color.green : color.gray
+    table.cell(infoTable, 1, 5, target2Hit ? "✓" : str.tostring(target2N) + "N", text_color=color.white, bgcolor=t2Color)
+
+    table.cell(infoTable, 0, 6, "Target 3:", text_color=color.white, bgcolor=color.gray)
+    t3Color = target3Hit ? color.green : color.gray
+    table.cell(infoTable, 1, 6, target3Hit ? "✓" : str.tostring(target3N) + "N", text_color=color.white, bgcolor=t3Color)

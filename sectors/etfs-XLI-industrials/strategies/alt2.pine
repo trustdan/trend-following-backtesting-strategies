@@ -1,0 +1,161 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © danieltuckerrust
+// ALTERNATIVE 2: Classic EMA Crossover
+// THEORY: Weighted moving averages filter noise better than absolute high/low breakouts.
+// Ed Seykota's original approach used EMA systems. A fast EMA crossing a slow EMA
+// signals trend direction more smoothly than Donchian breakouts.
+// Trade-off: Smoother signals, less noise, but delayed entries compared to breakouts.
+
+//@version=6
+strategy("Seykota Alt 2: EMA Crossover v1.0",
+     overlay=true,
+     initial_capital=100000,
+     commission_type=strategy.commission.percent, commission_value=0.005,
+     slippage=2,
+     default_qty_type=strategy.fixed, default_qty_value=0,
+     pyramiding=10,
+     max_bars_back=5000)
+
+//================ Inputs
+allowLong   = input.bool(true,  "Allow LONGs?")
+allowShort  = input.bool(true,  "Allow SHORTs?")
+
+// CHANGED: EMA parameters instead of Donchian
+fastLen     = input.int(50,     "Fast EMA length",                    minval=2)
+slowLen     = input.int(200,    "Slow EMA length",                    minval=5)
+trailLen    = input.int(22,     "Chandelier trail lookback",          minval=5)
+
+nLen        = input.int(20,     "N = ATR length",                     minval=5)
+stopN       = input.float(2.5,  "Initial stop (in N)",                minval=0.5, step=0.25)
+trailN      = input.float(3.0,  "Chandelier trail (in N)",            minval=0.25, step=0.25)
+addStepN    = input.float(0.5,  "Add every X * N",                    minval=0.25, step=0.25)
+maxUnits    = input.int(4,      "Max units (incl. initial)",          minval=1, maxval=10)
+riskPct     = input.float(1.0,  "Risk % of equity PER UNIT",          minval=0.1, maxval=5, step=0.1)
+
+useMarket   = input.bool(false, "Use market regime filter?")
+marketSym   = input.symbol("SPY", "Market symbol for regime (if used)")
+marketTF    = input.timeframe("D", "Regime timeframe (if used)")
+marketLen   = input.int(200,    "Market MA length (if used)",         minval=50)
+
+minVol      = input.int(0,      "Min 20-bar avg volume (chart TF)",   minval=0)
+showSignals = input.bool(true,  "Plot signals & stops?")
+plotMAs     = input.bool(true,  "Plot EMAs?")
+
+// Date-range filter
+fromDate = input.time(defval=timestamp("2022-01-01T00:00:00"), title="Backtest FROM (yyyy-mm-dd)", confirm=true)
+toDate   = input.time(defval=timestamp("2099-12-31T23:59:59"), title="Backtest TO (yyyy-mm-dd)",   confirm=true)
+flatAtFrom = input.bool(true, "Force FLAT at range start?")
+isRangeStart = (time[1] < fromDate) and (time >= fromDate)
+if flatAtFrom and isRangeStart and strategy.position_size != 0
+    strategy.close_all(comment="Flat at FROM")
+
+//================ Helpers
+sharesForUnit(_equity, _Nentry) =>
+    riskDollars   = _equity * (riskPct/100.0)
+    perShareRisk  = math.max(stopN * _Nentry, syminfo.mintick)
+    math.max(1, math.floor(riskDollars / perShareRisk))
+
+inRange = (time >= fromDate) and (time <= toDate)
+
+//================ Core calcs
+N        = ta.atr(nLen)
+volMA    = ta.sma(volume, 20)
+liqOK    = volMA >= minVol
+
+// CHANGED: EMAs instead of Donchian
+fast = ta.ema(close, fastLen)
+slow = ta.ema(close, slowLen)
+
+// Market regime (optional)
+mClose = request.security(marketSym, marketTF, close)
+mMA    = request.security(marketSym, marketTF, ta.sma(close, marketLen))
+longRegOK  = not useMarket or (mClose > mMA)
+shortRegOK = not useMarket or (mClose < mMA)
+
+//================ Signals (crossover logic)
+longCross  = allowLong  and liqOK and longRegOK  and ta.crossover(fast, slow)
+shortCross = allowShort and liqOK and shortRegOK and ta.crossunder(fast, slow)
+
+//================ Position state
+var float N_entry       = na
+var float lastAddLong   = na
+var float lastAddShort  = na
+var int   units         = 0
+
+inPos     = strategy.position_size != 0
+inLong    = strategy.position_size > 0
+inShort   = strategy.position_size < 0
+
+if not inPos
+    units        := 0
+    lastAddLong  := na
+    lastAddShort := na
+    N_entry      := na
+
+//================ Entries
+if inRange and not inPos and longCross
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       := 1
+    lastAddLong := close
+
+if inRange and not inPos and shortCross
+    N_entry := N
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        := 1
+    lastAddShort := close
+
+//================ Chandelier trailing stops
+trailL = ta.highest(high, trailLen) - trailN * N_entry
+trailS = ta.lowest(low,  trailLen) + trailN * N_entry
+
+//================ Add-ons (pyramid into strength)
+// Add when price extends favorably by addStepN * N
+canAddLong  = inRange and inLong  and units < maxUnits and high >= nz(lastAddLong)  + addStepN * N_entry
+canAddShort = inRange and inShort and units < maxUnits and low  <= nz(lastAddShort) - addStepN * N_entry
+
+if canAddLong
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("L", strategy.long, qty=sh)
+    units       += 1
+    lastAddLong := close
+
+if canAddShort
+    float sh = sharesForUnit(strategy.equity, N_entry)
+    strategy.entry("S", strategy.short, qty=sh)
+    units        += 1
+    lastAddShort := close
+
+//================ Exits (Chandelier trail + initial stop)
+var float stopL = na
+var float stopS = na
+
+if inRange and inLong
+    initStopL = strategy.position_avg_price - stopN * N_entry
+    stopL     := math.round_to_mintick(math.max(initStopL, trailL))
+    strategy.exit("L-EXIT", from_entry="L", stop=stopL)
+else
+    stopL := na
+
+if inRange and inShort
+    initStopS = strategy.position_avg_price + stopN * N_entry
+    stopS     := math.round_to_mintick(math.min(initStopS, trailS))
+    strategy.exit("S-EXIT", from_entry="S", stop=stopS)
+else
+    stopS := na
+
+//================ Plots
+plot(plotMAs ? fast : na, "Fast EMA", color=color.new(color.blue, 0), linewidth=2)
+plot(plotMAs ? slow : na, "Slow EMA", color=color.new(color.red, 0), linewidth=2)
+
+// Highlight crossover zones
+bgcolor(longCross ? color.new(color.green, 90) : na, title="Long Cross")
+bgcolor(shortCross ? color.new(color.red, 90) : na, title="Short Cross")
+
+plotshape(showSignals and longCross,  title="Long Cross",  style=shape.triangleup,   location=location.belowbar, size=size.small, color=color.new(color.green, 0), text="EMA↑")
+plotshape(showSignals and shortCross, title="Short Cross", style=shape.triangledown, location=location.abovebar, size=size.small, color=color.new(color.red,   0), text="EMA↓")
+
+plot(showSignals and inLong  ? stopL : na, "Long Stop",  color=color.new(color.red,  0), style=plot.style_linebr, linewidth=2)
+plot(showSignals and inShort ? stopS : na, "Short Stop", color=color.new(color.red,  0), style=plot.style_linebr, linewidth=2)
