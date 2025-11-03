@@ -33,7 +33,9 @@
       "Bash(then sed -i '159,163s/.*/\\/\\/================ THREE-TIERED EXIT LOGIC (KEY INNOVATION)\\n\\n\\/\\/ Calculate momentum crosses globally (must run on every bar for consistency)\\nrsiCrossUnder = ta.crossunder(rsiValue, rsiMomentumFade)\\nrsiCrossOver = ta.crossover(rsiValue, rsiMomentumFade)\\n\\n\\/\\/ 1. EARLY EXIT: Momentum fades (RSI crosses 50)\\nmomentumFadedLong = isLong and rsiCrossUnder\\nmomentumFadedShort = isShort and rsiCrossOver/' \"$file\")",
       "Bash(then sed -i '/^\\/\\/ Background color showing exit zones$/,/^        color\\.new(color\\.blue, 95), title=/c\\// Background color showing exit zones\\nexitZoneColor = barsInPosition >= maxExitBars ? color.new(color.red, 85) : barsInPosition >= standardExitBars ? color.new(color.orange, 90) : color.new(color.blue, 95)\\nbgcolor(exitZoneColor, title=\"\"Exit Zone: Red=Force Exit, Orange=Standard, Blue=Early\"\")' \"$file\")",
       "Bash(awk:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"create_micro_images.ps1\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem -Path ''sectors'' -Filter ''*_micro.png'' -Recurse | Remove-Item -Force\")"
     ],
     "deny": [],
     "ask": []

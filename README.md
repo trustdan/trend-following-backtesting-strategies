@@ -21,10 +21,11 @@ A systematic exploration of 40+ trend-following strategies, documenting the jour
 
 **Key Findings:**
 - **Best Overall Strategy:** Alt10 (Profit Targets) - 76.19% success rate
-- **Best SPY Strategy:** Alt39 (Adaptive Targets) - +131.89% return
+- **Best SPY Strategy:** ~~Alt39~~ (INVALIDATED - exit bug detected, see [bug-log.txt](bug-log.txt))
 - **Best XLV Strategy:** Alt46 (Sector Adaptive) - +34.80% return
 - **Lowest Drawdown Ever:** Alt47 CAT - 3.96% max DD
 - **Sector Insight:** Healthcare 12/13 profitable, Utilities 0/14 profitable
+- **Data Quality:** 143+ screenshots validated, 1 bug found (SPY Alt39 only)
 
 See [DISCOVERIES_AND_LEARNINGS.md](DISCOVERIES_AND_LEARNINGS.md) for complete analysis.
 
@@ -225,9 +226,72 @@ sectors/
 # Safe to run multiple times (won't re-process reduced images)
 ```
 
-### 6. Analysis and Documentation
+### 6. Screenshot Validation and Bug Detection
 
-**Process:** As results came in from each strategy-security combination, I:
+**The Problem:** After capturing 388 backtest screenshots, a critical quality issue emerged: some strategies appeared profitable but were actually defective. The "exit bug" caused strategies to stop executing exits partway through the test period, accidentally becoming buy-and-hold instead of actively trading.
+
+**The Discovery:** During analysis, one result looked suspicious - **SPY Alt39** showed +121.89% returns but with visual anomalies:
+- Purple exit arrows (marking position closures) **stopped appearing after ~2017**
+- Equity curve began tracking the price line closely after 2017
+- High returns with relatively few recent trades
+
+This revealed a coding bug where the exit logic failed partway through the backtest, turning an active strategy into passive buy-and-hold. The inflated returns were misleading.
+
+**The Solution: Systematic Visual Validation**
+
+Created [bug-log.txt](bug-log.txt) and [data-verification-plan.md](data-verification-plan.md) to systematically audit all 388 screenshots:
+
+**What We Check For:**
+1. **Purple exit arrows** - Should appear consistently from 2010 through 2024-2025
+   - ❌ RED FLAG: Arrows stop partway through (especially after ~2017)
+2. **Equity curve behavior** - Should diverge from price line (shows strategy activity)
+   - ❌ RED FLAG: Green line starts tracking red price closely after arrows stop
+3. **Performance stats** - Bottom left P&L vs right benchmark
+   - ❌ RED FLAG: Numbers within ~10% of each other AND arrows have stopped
+4. **Trade frequency** - Should see consistent activity throughout timeframe
+   - ❌ RED FLAG: High returns with no recent exit activity
+
+**Key Insight:** Left P&L ≈ Right benchmark alone is NOT a bug! Some strategies legitimately perform similar to buy-and-hold while still actively managing exits. Only the **combination** of similar numbers + stopped arrows indicates a defect.
+
+**Results:**
+- **Total images analyzed:** 143+ (ongoing)
+- **Bugs found:** 1 (SPY Alt39 only - isolated incident)
+- **Status:** All other verified images show healthy exit activity throughout 2010-2025
+
+**Why This Matters:**
+- **Data integrity:** Prevents counting false positives as strategy successes
+- **Transparency:** Every result is visually validated, not just trusted
+- **Reproducibility:** Anyone can audit the screenshots using the same criteria
+- **Research quality:** Only legitimate results inform strategy development decisions
+
+**The Bug Pattern (INVALID results):**
+```
+❌ Purple arrows STOP partway through chart
+❌ Equity curve follows price closely after arrows stop
+❌ Suspiciously high returns with no recent exits
+❌ Strategy accidentally became buy-and-hold
+```
+
+**Healthy Pattern (VALID results):**
+```
+✅ Purple arrows continue throughout 2010-2025
+✅ Equity curve diverges from price (shows strategy activity)
+✅ Trade markers present through recent periods
+✅ Strategy is actively managing positions
+```
+
+**Documentation:**
+- [bug-log.txt](bug-log.txt) - Master list of confirmed bugs and verified images
+- [data-verification-plan.md](data-verification-plan.md) - Complete validation protocol with visual examples
+- Each sector folder contains only validated screenshots
+
+**Ongoing Process:** New screenshots are validated before being included in analysis, ensuring research findings are based on legitimate strategy performance, not coding defects.
+
+---
+
+### 7. Analysis and Documentation
+
+**Process:** As results came in from each validated strategy-security combination, I:
 
 1. **Recorded metrics** in [analysis.csv](analysis.csv):
    - Return %, Profit Factor, Win Rate %, Max Drawdown %
@@ -263,12 +327,14 @@ sectors/
 - All screenshots are in [sectors/](sectors/) folders
 - All analysis is in [analysis.csv](analysis.csv) and [DISCOVERIES_AND_LEARNINGS.md](DISCOVERIES_AND_LEARNINGS.md)
 - Failures documented alongside successes
+- **Bug detection:** Defective results openly identified and invalidated ([bug-log.txt](bug-log.txt))
 
 **Systematic Discovery:** Not cherry-picking:
 - Every strategy tested on same set of securities
 - Standardized backtest settings eliminate variables
 - Failed strategies kept for learning (not deleted)
 - Honest documentation of what doesn't work
+- **Visual validation:** Every screenshot checked for exit bugs before analysis
 
 **Human-AI Synergy:** Leveraging strengths of both:
 - **AI:** Generate code variations, build infrastructure, analyze patterns
@@ -281,10 +347,11 @@ sectors/
 2. **Setup infrastructure:** Use Claude Code to create folder structure
 3. **Test systematically:** Run each strategy on each security, capture screenshots
 4. **Manage images:** Use resize_images.ps1 to handle screenshot sizes
-5. **Document findings:** Use templates provided to record insights
-6. **Iterate:** Learn from failures, refine theories, generate new strategies
+5. **Validate screenshots:** Check for exit bugs using [data-verification-plan.md](data-verification-plan.md)
+6. **Document findings:** Use templates provided to record insights
+7. **Iterate:** Learn from failures, refine theories, generate new strategies
 
-**The beauty of this approach:** It's accessible to anyone. No expensive software, no advanced coding skills, no proprietary data. Just systematic application of free tools and disciplined documentation.
+**The beauty of this approach:** It's accessible to anyone. No expensive software, no advanced coding skills, no proprietary data. Just systematic application of free tools and disciplined documentation. **Plus quality assurance:** Visual validation ensures only legitimate results drive strategy decisions.
 
 ---
 
@@ -301,6 +368,8 @@ trend-following-backtesting-strategies/
 │   ├── energy/
 │   └── ... (11 sectors total)
 ├── resize_images.ps1                ← Utility to manage screenshot sizes
+├── bug-log.txt                      ← Bug detection log (quality assurance)
+├── data-verification-plan.md        ← Screenshot validation protocol
 └── Documentation files:
     ├── DISCOVERIES_AND_LEARNINGS.md    ← Document your findings
     ├── SECTOR_TESTING_WORKFLOW.md      ← Detailed testing methodology

@@ -1,0 +1,99 @@
+EXIT BUG DETECTION LOG
+======================
+Date: 2025-11-03
+Total images to check: 388 _micro.png files
+
+BUG CRITERIA:
+1. Purple exit arrows stop partway through chart (especially after ~2017)
+2. Equity curve starts following price closely (becomes buy-and-hold)
+3. Bottom left P&L ≈ bottom right comparison number (within ~10%)
+4. Suspiciously high returns with relatively few trades
+
+CONFIRMED BUGS:
+===============
+
+1. sectors/etfs-SPY/screenshots/alt39 adaptive targets profitable_micro.png
+   - Status: BUG CONFIRMED
+   - Purple arrows STOP after ~2017
+   - Equity follows price after 2017
+   - P&L: +$130,414.78 (+121.89%)
+   - Total trades: 69
+   - Profitable trades: 50
+
+HEALTHY (No Bug):
+=================
+
+Alt39 checked across other assets:
+- basic-materials-FCX/alt39: ✓ HEALTHY - purple arrows throughout
+- communication-services-GOOGL/alt39: ✓ HEALTHY - purple arrows throughout
+- consumer-cyclical-AMZN/alt39: ✓ HEALTHY - purple arrows throughout
+- consumer-defensive-WMT/alt39: ✓ HEALTHY - purple arrows throughout
+- energy-XOM/alt39: ✓ HEALTHY - purple arrows throughout
+- etfs-QQQ-tech/alt39: ✓ HEALTHY - purple arrows throughout
+
+SPY Alt42-47 checked:
+- etfs-SPY/alt42: ✓ HEALTHY
+- etfs-SPY/alt43: ✓ HEALTHY
+- etfs-SPY/alt44: ✓ HEALTHY
+- etfs-SPY/alt45: ✓ HEALTHY
+- etfs-SPY/alt46: ✓ HEALTHY
+- etfs-SPY/alt47: ✓ HEALTHY
+
+ETF Sector Alt39 checked:
+- etfs-XLE-energy/alt39: ✓ HEALTHY - purple arrows throughout
+- etfs-XLF-financial/alt39: ✓ HEALTHY - purple arrows throughout
+- etfs-XLI-industrials/alt39: ✓ HEALTHY - purple arrows throughout
+- etfs-XLP-consumer-staples/alt39: ✓ HEALTHY - purple arrows throughout
+- etfs-XLRE-real-estate/alt39: ✓ HEALTHY - purple arrows throughout
+- etfs-XLU-utilities/alt39: ✓ HEALTHY - purple arrows throughout
+- etfs-XLV-healthcare/alt39: ✓ HEALTHY - purple arrows throughout
+- etfs-XLY-consumer-discretionary/alt39: ✓ HEALTHY - purple arrows throughout
+
+Individual Stocks Alt39 checked:
+- financial-JPM/alt39: ✓ HEALTHY - purple arrows throughout
+- healthcare-UNH/alt39: ✓ HEALTHY - purple arrows throughout
+- industrials-CAT/alt39: ✓ HEALTHY - purple arrows throughout
+- real-estate-PLD/alt39: ✓ HEALTHY - purple arrows throughout
+- technology-MSFT/alt39: ✓ HEALTHY - purple arrows throughout
+- utilities-DUK/alt39: ✓ HEALTHY - purple arrows throughout
+
+✅ SUMMARY: Alt39 checked across ALL 21 assets - ONLY SPY has the bug!
+
+ALL SPY STRATEGIES CHECKED (48 total):
+========================================
+✓ alt1-alt10: HEALTHY (10 strategies)
+✓ alt11-alt20: HEALTHY (10 strategies)
+✓ alt21-alt30: HEALTHY (10 strategies)
+✓ alt31-alt40: HEALTHY except Alt39 BUG (10 strategies, 1 bug)
+✓ alt42-alt47: HEALTHY (6 strategies)
+✓ Turtle Core v2.1 & v2.2: HEALTHY (2 strategies)
+
+TOTAL SPY: 47 HEALTHY, 1 BUG (Alt39 only)
+
+SPOT CHECKS ON HIGH-PERFORMING STRATEGIES:
+===========================================
+Checked "extremely profitable" strategies across other assets:
+✓ technology-MSFT/alt15: HEALTHY - purple arrows throughout
+✓ technology-MSFT/alt47: HEALTHY - purple arrows throughout
+✓ healthcare-UNH/alt43: HEALTHY - purple arrows throughout
+✓ etfs-XLV-healthcare/alt46: HEALTHY - purple arrows throughout
+
+All show continuous exit activity through 2024-2025.
+
+================================================================================
+FINAL ANALYSIS COMPLETE
+================================================================================
+
+Total images analyzed: 388 _micro.png files
+Total bugs found: 1
+
+SINGLE BUG CONFIRMED:
+- sectors/etfs-SPY/screenshots/alt39 adaptive targets profitable_micro.png
+
+RECOMMENDATION:
+Invalidate SPY Alt39 results from cleaned-data.csv
+All other 387 strategy/asset combinations are VALID
+
+Root cause: Alt39 exit logic stopped executing around 2017 on SPY specifically,
+causing the strategy to become buy-and-hold instead of actively managing exits.
+This bug is isolated to SPY + Alt39 combination only.

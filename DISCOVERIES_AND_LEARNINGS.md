@@ -8,38 +8,82 @@
 
 ## 🏆 EXECUTIVE SUMMARY: WINNING STRATEGIES FOR OPTIONS TRADERS
 
-**TESTED:** 10 strategies across 21 securities/ETFs = 210 total backtests
-**KEY FINDING:** Only 2 strategies deliver consistent excellence: **Alt26 (Fractional Pyramid)** and **Alt10 (Profit Targets)** both achieve 76% profitable rate!
+**TESTED:** 14 strategies across 21 securities/ETFs = 294 total backtests
+**KEY FINDING:** Clear hierarchy emerged with **Alt10 dominating at 76.19%** success rate, followed by a strong second tier of 66-62% performers!
 
-### 🎯 THE WINNER: Alt26 (Fractional Pyramid) - "THE GOLDILOCKS STRATEGY"
+### 🥇 THE UNDISPUTED CHAMPION: Alt10 (Profit Targets) - "THE CONSISTENT WINNER"
 
-**Why it's PERFECT for options traders:**
-- **Regular profit-taking:** 100%→75%→50%→25% scaling creates natural exit points
-- **Options-friendly holding periods:** 2-8 week typical position duration
-- **Low drawdowns:** Most assets have single-digit max DD (MSFT 4.98%, WMT 5.96%)
-- **Works on BOTH stocks AND ETFs:** No divergence like other strategies
-- **Best SPY performance EVER:** +33.5% (vs Alt15: -21.8%, a 55% swing!)
-- **Legendary results:** XLV PF 2.791 (highest ever), CAT 62.1% win rate
-- **76% success rate:** 16/21 profitable (10 very profitable, 2 profitable, 3 scratch, 4 unprofitable)
-
-**Best for:** Broad market ETFs (SPY, QQQ), growth stocks (AMZN, MSFT), healthcare (UNH, XLV), consumer (WMT, XLY)
-**Avoid on:** Commodities (FCX -20.2%), utilities (DUK -7.2%)
-
-### 🥈 THE RUNNER-UP: Alt10 (Profit Targets) - "THE REVERSAL PROTECTOR"
-
-**Why it's EXCELLENT for options traders:**
+**Why it's THE BEST for options traders:**
+- **Highest success rate:** 76.19% (16/21 profitable) - **13 very profitable + 3 profitable**
 - **Explicit profit targets:** 3N, 6N, 9N exits = predictable hold times (3-10 weeks)
 - **Reduces reversal risk:** Locks in gains before trend exhaustion
-- **Transforms ETF performance:** SPY from Alt9's -24% to +20% (44% swing!)
-- **High win rates:** Most assets 50-60% win rate with strong profit factors
-- **76% success rate:** 16/21 profitable (13 very profitable, 3 profitable, 1 scratch, 4 unprofitable)
+- **Works on BOTH stocks AND ETFs:** UNH +33.13%, SPY +20.31%, QQQ +22.75%, XLV +27.68%
+- **Options-perfect holding periods:** 3-10 week typical duration matches monthly/quarterly expiration
+- **High win rates:** Most assets 50-60% with strong profit factors
 
-**Best for:** Healthcare (UNH +33.1%), broad market ETFs (SPY +20.3%, QQQ +22.8%), growth stocks
+**Best for:** Healthcare (UNH +33.1%, XLV +27.7%), broad market (SPY +20.3%, QQQ +22.8%), growth stocks
 **Avoid on:** Commodities (FCX -32.2% - WORST EVER), utilities (DUK -12.4%)
+
+### 🥈 THE SECOND TIER: Elite Performers (61-67% Success)
+
+**Alt45 (Dual-Momentum Confirmation)** - 66.67% success rate - **"THE CONSISTENCY KING"**
+- **10 very profitable + 4 profitable + 2 scratch** = most balanced performance
+- **QQQ +29.23%** leads tech, **SPY +15.10%** solid broad market (but Alt39 crushes it)
+- **Best for:** Individual stocks with strong momentum (CAT +28.62%, UNH +27.07%)
+- **Rating:** ⭐⭐⭐⭐ for options - Adaptive age-based exits (3-10 weeks)
+
+**Alt46 (Sector-Adaptive Parameters)** - 61.90% success rate - **"THE HEALTHCARE SPECIALIST"**
+- **RECORD BREAKERS:** XLV +34.80% (BEST EVER), UNH +32.16% (BEST EVER)
+- **10 very profitable + 3 profitable + 3 scratch** = sector optimization works!
+- **Best for:** Healthcare options (XLV, UNH), tech mega-caps (MSFT +26.31%, GOOGL +23.19%)
+- **Rating:** ⭐⭐⭐⭐ for options - Sector-based exits (3-12 weeks)
+
+**Alt43 (Volatility-Adaptive Targets)** - 61.90% success rate - **"THE STOCK SPECIALIST"**
+- **XLV +34.79%** (near-record), strong across individual stocks
+- **Best for:** Volatile individual stocks with adaptive profit targets
+- **Rating:** ⭐⭐⭐⭐⭐ for options - Volatility-based exits (3-12 weeks)
+
+**Alt39 (Adaptive Age-Based Targets)** - 61.90% success rate - **"THE SPY LEGEND"**
+- **SPY +131.89% LEGENDARY** - BEST SPY RESULT ACROSS ALL 294 BACKTESTS!
+- **Aging urgency:** Older positions get tighter stops = matches options time decay perfectly
+- **Best for:** SPY calls (dominant), individual stocks (10 very profitable)
+- **Rating:** ⭐⭐⭐⭐⭐ for options - Age-based exits (3-12 weeks)
+
+### 🥉 THE SOLID PERFORMERS: Good But Not Great (52-57% Success)
+
+**Alt26 (Fractional Pyramid)** - 57.14% success rate - **"THE SCALE-OUT SPECIALIST"**
+- **SPY +33.50%** (2nd best), **XLV PF 2.791** (HIGHEST ETF PF EVER)
+- **10 very profitable + 2 profitable** but 6 unprofitable drags success rate
+- **Best for:** Gradual position scaling, broad market ETFs
+- **Rating:** ⭐⭐⭐⭐⭐ for options - Scale-out exits (2-8 weeks)
+
+**Alt44 (ADX Pyramiding Hybrid)** - 57.14% success rate - **"THE QUALITY FILTER"**
+- **UNH +17.77% with 12.861 PF and 86.67% win rate** - LEGENDARY but only 30 trades
+- **4 very profitable + 8 profitable** = more profitable than very profitable
+- **Best for:** High-quality trending individual stocks
+- **Rating:** ⭐⭐⭐ for options - Selective entries, variable holds
+
+**Baseline (Turtle Core v2.2)** - 55.00% success rate - **"THE RELIABLE BENCHMARK"**
+- **WMT +31.69% with 2.935 PF** - BEST PF EVER for defensive stock
+- Proven system, works across most asset classes
+- **Rating:** ⭐⭐⭐ for options - Regular exits (4-12 weeks)
+
+**Alt47 (Momentum-Scaled Sizing)** - 52.38% success rate - **"THE CONSERVATIVE SPECIALIST"**
+- **CAT +21.16% with 3.96% DD** - LOWEST DRAWDOWN ACROSS ALL 294 BACKTESTS!
+- **PLD +20.98% with 4.73% DD** - 2nd lowest drawdown ever
+- **Individual stock excellence (73% success)** but **ETF disaster (30% success)**
+- **Best for:** Individual stocks ONLY (MSFT +33.61%, WMT +28.59%)
+- **AVOID:** All ETFs (SPY +7.91% vs Alt39 +131.89%)
+- **Rating:** ⭐⭐⭐ for options on stocks only - Momentum-scaled exits (4-10 weeks)
+
+**Alt42 (Momentum-Gated Time)** - 52.38% success rate - **"THE MODEST GAINER"**
+- **2 very profitable + 9 profitable** = consistent modest gains
+- Low trade counts (15-27 per security) = fewer opportunities
+- **Rating:** ⭐⭐⭐ for options - Time-based exits with momentum gates
 
 ### ⚠️ THE CATASTROPHIC FAILURE: Alt20 (Asymmetric Long/Short) - "THE TRAP"
 
-**95% failure rate** (0 profitable, 5 scratch, 14 unprofitable out of 19 tested)
+**0% success rate** (0 profitable, 5 scratch, 14 unprofitable out of 19 tested)
 **Lesson learned:** Different parameters for longs vs shorts DESTROYS consistency
 **Never use this strategy!**
 
@@ -47,25 +91,36 @@
 
 ## 📊 STRATEGY POWER RANKINGS (Overall Performance)
 
-### Tier 1: ELITE (70%+ Profitable Rate)
-1. **Alt26 (Fractional Pyramid)** - 76% (16/21) - CHAMPION
-2. **Alt10 (Profit Targets)** - 76% (16/21) - CO-CHAMPION
+**All 14 Strategies Ranked by Success Rate:**
+
+### Tier 1: ELITE (60%+ Profitable Rate)
+1. **Alt10 (Profit Targets)** - 76.19% (16/21: 13 VP, 3 P, 1 S, 4 U) - **UNDISPUTED CHAMPION**
+2. **Alt45 (Dual-Momentum)** - 66.67% (14/21: 10 VP, 4 P, 2 S, 5 U) - **CONSISTENCY KING**
+3. **Alt46 (Sector-Adaptive)** - 61.90% (13/21: 10 VP, 3 P, 3 S, 5 U) - **HEALTHCARE SPECIALIST**
+4. **Alt43 (Volatility-Adaptive)** - 61.90% (13/21: 10 VP, 3 P, 2 S, 6 U) - **STOCK SPECIALIST**
+5. **Alt39 (Age-Based Targets)** - 61.90% (13/21: 10 VP, 3 P, 3 S, 5 U) - **SPY LEGEND**
 
 ### Tier 2: SOLID (50-60% Profitable Rate)
-3. **Turtle Core v2.2 (Baseline)** - 52% (11/21) - Reliable benchmark
-4. **Alt15 (Single Position)** - 43% (9/21) - Stock specialist (73% on individual stocks!)
+6. **Alt44 (ADX Pyramiding)** - 57.14% (12/21: 4 VP, 8 P, 2 S, 7 U) - **QUALITY FILTER**
+7. **Alt26 (Fractional Pyramid)** - 57.14% (12/21: 10 VP, 2 P, 3 S, 6 U) - **SCALE-OUT SPECIALIST**
+8. **Baseline (Turtle Core v2.2)** - 55.00% (11/20: 6 VP, 5 P, 5 S, 4 U) - **RELIABLE BENCHMARK**
+9. **Alt47 (Momentum-Scaled)** - 52.38% (11/21: 8 VP, 5 P, 0 S, 10 U) - **STOCK-ONLY SPECIALIST**
+10. **Alt42 (Momentum-Gated Time)** - 52.38% (11/21: 2 VP, 9 P, 2 S, 8 U) - **MODEST GAINER**
 
 ### Tier 3: SELECTIVE (40-50% Profitable Rate)
-5. **Alt28 (ADX Filter)** - 43% (9/21) - Quality over quantity, diagnostic tool
-6. **Alt22 (Parabolic SAR)** - 43% (9/21) - Tech momentum specialist (QQQ +32.44%!)
-7. **Alt9 (Time Exit)** - 38% (8/21) - Individual stock specialist, ETF killer
+11. **Alt15 (Single Position)** - 42.86% (9/21: 7 VP, 2 P, 1 S, 11 U) - **STOCK SPECIALIST**
+12. **Alt28 (ADX Filter)** - 42.86% (9/21: 5 VP, 4 P, 3 S, 9 U) - **DIAGNOSTIC TOOL**
+13. **Alt22 (Parabolic SAR)** - 42.86% (9/21: 6 VP, 3 P, 1 S, 11 U) - **TECH MOMENTUM**
 
 ### Tier 4: STRUGGLING (30-40% Profitable Rate)
-8. **Alt17 (Dual Timeframe)** - 38% (8/21) - Over-filters ETFs
-9. **Alt2 (EMA Crossover)** - 38% (8/21) - Over-filtering issues
+14. **Alt9 (Time Exit)** - 38.10% (8/21: 7 VP, 1 P, 2 S, 11 U) - **INDIVIDUAL STOCK ONLY**
+15. **Alt17 (Dual Timeframe)** - 38.10% (8/21: 6 VP, 2 P, 5 S, 8 U) - **OVER-FILTERS**
+16. **Alt2 (EMA Crossover)** - 38.10% (8/21: 1 VP, 7 P, 2 S, 11 U) - **OVER-FILTERING**
 
-### Tier 5: CATASTROPHIC (<10% Profitable Rate)
-10. **Alt20 (Asymmetric Long/Short)** - 0% (0/19) - COMPLETE FAILURE
+### Tier 5: CATASTROPHIC (0% Profitable Rate)
+17. **Alt20 (Asymmetric Long/Short)** - 0.00% (0/19: 0 VP, 0 P, 5 S, 14 U) - **COMPLETE FAILURE**
+
+**Legend:** VP = Very Profitable, P = Profitable, S = Scratch, U = Unprofitable
 
 ---
 
@@ -231,74 +286,239 @@
 
 ---
 
-## 🎯 OVERALL TAKEAWAYS (Summary - Update as Patterns Emerge)
+## 🎯 COMPREHENSIVE BIG-PICTURE TAKEAWAYS (ALL 14 STRATEGIES)
 
-### Batch 1: Initial 10 Strategies (Current)
-
-#### Universal Truths:
-- ✅ **Alt26 and Alt10 are co-champions** - Both achieve 76% profitable rate
-- ✅ **Individual stocks outperform ETFs** - Except with Alt26/Alt10 which work on both
-- ✅ **Utilities fail EVERYTHING** - Worst sector universally across all strategies
-- ✅ **Healthcare is GOLD** - Best sector for consistent profits (UNH 72% win rate with Alt28!)
-- ✅ **Fractional sizing is magic** - Alt26 transforms ETF performance (SPY +33.5% vs Alt15 -21.8%)
-- ✅ **Profit targets beat time exits** - Alt10 SPY +20% vs Alt9 SPY -24% (44% swing!)
-- ✅ **Asymmetric optimization is a trap** - Alt20 has 95% failure rate
-- ✅ **Over-filtering destroys performance** - Alt2/Alt17 miss too many valid trends
-
-#### Sector Characteristics Discovered:
-- **Trend-Friendly Sectors:** Technology (MSFT, QQQ), Healthcare (UNH, XLV), Consumer Cyclical (AMZN), Industrials (CAT)
-- **Choppy/Difficult Sectors:** Utilities (DUK, XLU - TOXIC!), Energy (XOM, XLE - mean-reverting), Real Estate ETFs (XLRE)
-- **High Volatility Sectors:** Technology, Consumer Cyclical, Basic Materials
-- **Low Volatility Sectors:** Utilities (too low = failure), Consumer Defensive (WMT is special exception!)
-
-#### Position Management Insights:
-- **Pyramiding helps:** ETFs NEED pyramiding (Alt26 SPY +33.5% vs Alt15 SPY -21.8%)
-- **Single position better for:** Individual growth stocks ONLY (MSFT +52.7%, AMZN +48.6% with Alt15)
-- **Fractional sizing best for:** EVERYTHING except commodities - universal winner!
-
-#### Entry Mechanism Insights:
-- **Breakouts work best:** Baseline Donchian + fractional sizing = winner
-- **EMA entries preferred:** NEVER - Alt2 over-filters catastrophically
-- **Filtering required:** Yes for commodities (dual TF helps), NO for most stocks (over-filtering kills performance)
-- **Dual TF helps:** Only for individual trending stocks, destroys ETF performance
-
-#### Exit Strategy Insights:
-- **Profit targets best for:** OPTIONS TRADERS! Regular exits at 3N-6N-9N, works on stocks AND ETFs
-- **Trailing stops best for:** Tech momentum (Alt22 Parabolic SAR: QQQ +32.44%)
-- **Time exits work for:** Individual growth stocks ONLY (AMZN +37.7%), CATASTROPHIC on ETFs (SPY -24%)
-
-#### Directional Insights:
-- **Long bias sectors:** Technology, Healthcare, Consumer (all trend upward strongly)
-- **Short bias sectors:** None identified - Alt20 asymmetric strategy failed to prove directional differences exist
-- **Balanced sectors:** Industrials (cycles work both ways), Financials (moderate trends)
+**TESTED:** 294 total backtests (14 strategies × 21 securities)
+**DATA SPAN:** November 2025 - Comprehensive sector testing complete
 
 ---
 
-### 🎯 OPTIONS TRADER FINAL RECOMMENDATIONS
+### 🏆 BEST OVERALL PERFORMERS (Success Rate Hierarchy)
+
+**TIER 1 - ELITE (60-76% Success):**
+1. **Alt10 (Profit Targets)** - 76.19% - **THE UNDISPUTED CHAMPION**
+   - Dominates both stocks AND ETFs equally
+   - 13 very profitable + 3 profitable results
+   - Best for: Healthcare (UNH +33.13%), SPY (+20.31%), QQQ (+22.75%)
+
+2. **Alt45 (Dual-Momentum)** - 66.67% - **THE CONSISTENCY KING**
+   - Most balanced: 10 very profitable + 4 profitable + 2 scratch
+   - Best for: QQQ (+29.23%), individual stocks with momentum
+
+3. **Alt39 (Age-Based Targets)** - 61.90% - **THE SPY LEGEND**
+   - SPY +131.89% LEGENDARY - BEST ACROSS ALL 294 BACKTESTS!
+   - Aging urgency matches options time decay perfectly
+
+4. **Alt46 (Sector-Adaptive)** - 61.90% - **THE HEALTHCARE SPECIALIST**
+   - XLV +34.80% RECORD, UNH +32.16% RECORD
+   - Sector customization delivers record-breaking healthcare results
+
+5. **Alt43 (Volatility-Adaptive)** - 61.90% - **THE STOCK SPECIALIST**
+   - XLV +34.79% (near-record), strong individual stock performance
+
+**TIER 2 - SOLID (52-57% Success):**
+- Alt26 (57.14%) - SPY +33.50% (2nd best), XLV PF 2.791 (highest ETF PF ever)
+- Alt44 (57.14%) - UNH 12.861 PF with 86.67% win rate (legendary but low trades)
+- Baseline (55.00%) - WMT 2.935 PF (best ever), reliable benchmark
+- Alt47 (52.38%) - CAT 3.96% DD (LOWEST EVER!), stock specialist only
+- Alt42 (52.38%) - Modest consistent gains, time-gated entries
+
+---
+
+### 💰 BEST FOR CONSISTENT GAINS WITH LOW DOWNSIDE RISK
+
+**THE RISK-ADJUSTED CHAMPIONS:**
+
+**1. Alt47 (Momentum-Scaled Sizing) - ULTRA-LOW DRAWDOWN KING**
+- **CAT: +21.16% return with 3.96% DD** (Return/DD ratio: 5.34) - **LOWEST DD EVER!**
+- **PLD: +20.98% return with 4.73% DD** (Return/DD ratio: 4.44) - **2ND LOWEST DD EVER!**
+- **MSFT: +33.61% return with 7.44% DD** (Return/DD ratio: 4.52)
+- **BEST FOR:** Individual stocks ONLY - momentum confirmation protects capital brilliantly
+- **AVOID:** ALL ETFs (30% success rate) - momentum delay kills performance
+
+**2. Alt26 (Fractional Pyramid) - LOW DRAWDOWN ACROSS THE BOARD**
+- **MSFT: +16.33% with 4.98% DD** (Return/DD ratio: 3.28)
+- **WMT: +13.69% with 5.96% DD** (Return/DD ratio: 2.30)
+- **GOOGL: +18.65% with 5.70% DD** (Return/DD ratio: 3.27)
+- **XLV: +23.48% with 5.41% DD** (Return/DD ratio: 4.34)
+- **QQQ: +21.85% with 5.95% DD** (Return/DD ratio: 3.67)
+- **BEST FOR:** Broad market ETFs and growth stocks, universal low-risk champion
+
+**3. Alt10 (Profit Targets) - BALANCED RISK/REWARD**
+- **UNH: +33.13% with 6.99% DD** (Return/DD ratio: 4.74) - healthcare excellence
+- **CAT: +20.56% with 5.34% DD** (Return/DD ratio: 3.85)
+- Most assets maintain 8-14% DD with strong returns
+
+**4. Baseline (Turtle Core v2.2) - TIME-TESTED STABILITY**
+- **WMT: +31.69% with 6.38% DD** (Return/DD ratio: 4.97) + **PF 2.935 (BEST EVER!)**
+- **CAT: +26.35% with 6.73% DD** (Return/DD ratio: 3.92)
+- **MSFT: +36.22% with 8.63% DD** (Return/DD ratio: 4.20)
+
+**KEY INSIGHT:** For low-risk options trading:
+- Use **Alt47 for individual stock calls/puts** (ultra-low DD but avoid ETFs!)
+- Use **Alt26 for broad market ETF calls** (consistently low DD across all assets)
+- Use **Alt10 for healthcare options** (UNH exceptional risk/reward)
+
+---
+
+### 📈 BEST BY ASSET CLASS
+
+**BEST FOR SPY (BROAD MARKET):**
+1. **Alt39: +131.89%** - LEGENDARY, age-based targets capture full trends
+2. Alt26: +33.50% - Fractional pyramid 2nd best
+3. Alt10: +20.31% - Profit targets solid
+4. Alt46: +18.66% - Sector-adaptive good
+5. Alt43: +17.72% - Volatility-adaptive profitable
+**WORST:** Alt9: -23.99% (catastrophic time exit failure)
+
+**BEST FOR QQQ (TECH ETF):**
+1. **Alt22: +32.44%** - Parabolic SAR perfect for tech momentum
+2. Alt45: +29.23% - Dual-momentum excellent
+3. Alt39: +28.27% - Age-based strong
+4. Alt46: +24.06% - Sector-adaptive very profitable
+5. Alt43: +23.14% - Volatility-adaptive strong
+**KEY INSIGHT:** Tech momentum rewards aggressive trailing (SAR) and adaptive exits
+
+**BEST FOR XLV (HEALTHCARE ETF):**
+1. **Alt46: +34.80% (PF 2.688, 63.08% win)** - RECORD BREAKING!
+2. **Alt43: +34.79% (PF 2.688, 63.08% win)** - Near-identical record
+3. Alt39: +29.70% (PF 2.361, **64.29% win** - HIGHEST ETF WIN RATE!)
+4. Alt9: +29.96% (PF 2.102) - Time exits strong
+5. Alt47: +29.72% (PF 2.319) - Momentum-scaled good
+**KEY INSIGHT:** Healthcare = GOLD sector, nearly every strategy works!
+
+**BEST FOR INDIVIDUAL GROWTH STOCKS:**
+1. **Alt15 (Single Position):** MSFT +52.65%, AMZN +48.63%
+2. **Alt9 (Time Exit):** AMZN +37.65%, UNH +35.87%, CAT +31.54%
+3. **Alt47 (Momentum-Scaled):** MSFT +33.61%, WMT +28.59%, CAT +21.16%
+4. **Baseline:** MSFT +36.22%, AMZN +35.82%, WMT +31.69%
+**KEY INSIGHT:** Individual stocks reward single-position or time-based approaches
+
+**BEST FOR ETFs OVERALL:**
+1. **Alt10** - Works on SPY, QQQ, XLV, XLY, XLE (76.19% overall success)
+2. **Alt45** - Strong on QQQ, XLV, XLY (66.67% overall success)
+3. **Alt39** - Dominates SPY, strong on QQQ/XLV (61.90% overall success)
+4. **Alt46** - Record-breaking XLV performance (61.90% overall success)
+5. **Alt26** - Consistent across all ETFs (57.14% overall success)
+**AVOID:** Alt47 (30% ETF success), Alt9 (catastrophic SPY -23.99%)
+
+---
+
+### 🎯 UNIVERSAL TRUTHS DISCOVERED (ALL 294 BACKTESTS)
+
+**ABOUT STRATEGIES:**
+1. ✅ **Profit targets beat everything** - Alt10 (76.19%) dominates for consistency
+2. ✅ **Adaptive exits are king** - Top 5 strategies (Alt10, 45, 39, 46, 43) all use adaptive targeting
+3. ✅ **Age-based urgency works** - Alt39/Alt45 match options time decay perfectly
+4. ✅ **Sector optimization pays** - Alt46 sector parameters deliver healthcare records
+5. ✅ **Momentum confirmation crucial** - Alt45 dual-momentum = 66.67% success (2nd best)
+6. ✅ **Scale-out sizing helps ETFs** - Alt26 fractional pyramid SPY +33.50% vs Alt15 -21.84%
+7. ✅ **Time exits kill ETFs** - Alt9 SPY -23.99%, only works on individual stocks
+8. ✅ **Asymmetric parameters catastrophic** - Alt20 0% success rate proves optimization trap
+9. ✅ **Over-filtering destroys** - Alt2/Alt17 miss valid trends (38% success each)
+10. ✅ **Momentum gating reduces trades** - Alt42/Alt44 lower frequency but quality entries
+
+**ABOUT SECTORS:**
+1. ✅ **Healthcare is GOLD** - 12 of 13 strategies profitable (UNH Alt28: 72.22% win, PF 4.809!)
+2. ✅ **Utilities are TOXIC** - 0 of 14 strategies profitable (DUK/XLU fail everything)
+3. ✅ **Technology trends well** - 8 of 10 strategies profitable (momentum fits tech)
+4. ✅ **Energy mean-reverts** - Only 2 of 10 profitable (avoid XOM/XLE)
+5. ✅ **Commodities whipsaw** - FCX worst performer (Alt10: -32.21%)
+6. ✅ **WMT is special** - "Defensive" stock that trends (Baseline: +31.69%, PF 2.935)
+
+**ABOUT POSITION MANAGEMENT:**
+1. ✅ **Pyramiding essential for ETFs** - Alt26 SPY +33.50% vs Alt15 -21.84% (55% delta!)
+2. ✅ **Single position works for stocks** - Alt15 MSFT +52.65%, AMZN +48.63%
+3. ✅ **Fractional sizing universal** - Alt26 works on 57% of assets tested
+4. ✅ **Momentum confirmation limits risk** - Alt47 CAT 3.96% DD (lowest ever!)
+5. ✅ **Half-position starts hurt ETFs** - Alt47 30% ETF success vs 73% stock success
+
+**ABOUT OPTIONS TRADING:**
+1. ✅ **3-12 week holds ideal** - Alt10/39/43/45/46 all match options expiration
+2. ✅ **Explicit targets beat trailing** - Alt10 profit targets = predictable exits
+3. ✅ **Age-based matches decay** - Alt39/Alt45 aging urgency = options theta alignment
+4. ✅ **Frequent exits required** - Buy-and-hold (Alt15) fails for options (too long holds)
+5. ✅ **Healthcare best for options** - Clean trends, predictable holds, high win rates
+6. ✅ **Avoid utilities/energy** - Choppy sectors kill options premium
+
+---
+
+### 🎯 OPTIONS TRADER FINAL RECOMMENDATIONS (Updated with All 14 Strategies)
 
 **For options traders needing 2-14 week holds:**
 
-**PRIMARY STRATEGY:** Alt26 (Fractional Pyramid)
-**SECONDARY STRATEGY:** Alt10 (Profit Targets)
-**SPECIALTY STRATEGY:** Alt22 (Parabolic SAR) for tech momentum only
+**PRIMARY STRATEGY: Alt10 (Profit Targets)** - ⭐⭐⭐⭐⭐
+- 76.19% success rate (highest overall)
+- Explicit 3N-6N-9N exits = predictable 3-10 week holds
+- Works on BOTH stocks AND ETFs equally
+- **Best for:** Healthcare (UNH +33.13%), SPY (+20.31%), QQQ (+22.75%)
 
-**TRADE THESE SECTORS:**
-1. Healthcare (UNH, XLV) - BEST sector, works with everything
-2. Technology (MSFT, QQQ) - Strong trends, use SAR or fractional
-3. Consumer Cyclical (AMZN, XLY) - Explosive moves, regular exits
-4. Industrials (CAT, XLI) - Economic cycles, consistent trends
-5. WMT specifically - Hidden defensive gem with strong trends
+**SECONDARY STRATEGIES:**
+- **Alt39 (Age-Based Targets)** - ⭐⭐⭐⭐⭐ - **FOR SPY CALLS!**
+  - SPY +131.89% LEGENDARY (best SPY result ever!)
+  - Age-based urgency matches options time decay perfectly
+  - 61.90% success rate
+
+- **Alt45 (Dual-Momentum)** - ⭐⭐⭐⭐
+  - 66.67% success rate (2nd overall)
+  - Best balanced performance (10 VP + 4 P + 2 S)
+  - QQQ +29.23%, excellent for tech options
+
+- **Alt46 (Sector-Adaptive)** - ⭐⭐⭐⭐ - **FOR HEALTHCARE OPTIONS!**
+  - XLV +34.80% RECORD, UNH +32.16% RECORD
+  - 61.90% success rate
+  - Sector optimization delivers healthcare excellence
+
+- **Alt26 (Fractional Pyramid)** - ⭐⭐⭐⭐⭐
+  - 57.14% success rate but excellent risk/reward
+  - Low drawdowns across all assets (MSFT 4.98%, WMT 5.96%)
+  - Scale-out exits (100%→75%→50%→25%) = 2-8 week holds
+
+**SPECIALTY STRATEGIES:**
+- **Alt22 (Parabolic SAR)** - ⭐⭐⭐⭐ - **FOR QQQ OPTIONS!**
+  - QQQ +32.44% (best QQQ result!)
+  - Tech momentum specialist, 2-6 week adaptive holds
+
+- **Alt47 (Momentum-Scaled)** - ⭐⭐⭐ - **FOR INDIVIDUAL STOCK OPTIONS ONLY!**
+  - CAT 3.96% DD (lowest ever!), PLD 4.73% DD (2nd lowest!)
+  - 73% success on individual stocks BUT 30% on ETFs
+  - NEVER use on ETF options!
+
+**TRADE THESE SECTORS (in priority order):**
+1. **Healthcare (UNH, XLV)** - BEST sector across all strategies!
+   - Use Alt10, Alt46, Alt43, Alt39, or Alt28
+   - 72-86% win rates possible, clean trends, low volatility
+
+2. **Technology (MSFT, QQQ)** - Strong momentum trends
+   - Use Alt22 for QQQ (+32.44%), Alt47 for MSFT (+33.61%)
+   - 6-12 week holds, accelerating momentum works
+
+3. **Consumer Cyclical (AMZN, XLY)** - Explosive growth moves
+   - Use Alt10 (XLY +22.79%), Alt45 (AMZN +20.29%)
+   - 6-10 week holds during growth phases
+
+4. **Industrials (CAT, XLI)** - Economic cycle trends
+   - Use Alt47 (CAT +21.16%, 3.96% DD!), Alt10 (CAT +20.56%)
+   - 8-12 week holds, cycles create sustained trends
+
+5. **WMT specifically** - Hidden defensive gem
+   - Use any strategy except Alt20 (Baseline +31.69%, Alt47 +28.59%)
+   - "Defensive" stock that actually TRENDS!
 
 **AVOID THESE SECTORS:**
-1. Utilities (DUK, XLU) - TOXIC! All strategies fail
-2. Energy (XOM, XLE) - Choppy mean-reversion
-3. Basic Materials (FCX) - Unless using baseline/dual TF only
+1. **Utilities (DUK, XLU)** - TOXIC! 0 of 14 strategies profitable
+2. **Energy (XOM, XLE)** - Choppy mean-reversion, only 2/14 profitable
+3. **Basic Materials (FCX)** - Commodity whipsaws (Alt10: -32.21%!)
+4. **Real Estate ETF (XLRE)** - Fails despite individual REITs working
 
-**IDEAL OPTIONS SETUP:**
-- Buy 8-12 week ATM or slightly OTM calls/puts
-- Use Alt26 or Alt10 for entry/exit signals
-- Take profits at 3N, 6N, or 9N levels (Alt10)
-- Or scale out 25% at each profit level (Alt26)
+**IDEAL OPTIONS SETUP BY STRATEGY:**
+- **Alt10:** Buy 8-12 week calls, take profits at 3N/6N/9N levels
+- **Alt39:** Buy 12-16 week SPY calls, let age-based urgency tighten stops
+- **Alt45:** Buy 8-12 week momentum calls, dual-confirmation filters entries
+- **Alt46:** Buy 12-16 week XLV/UNH calls, sector parameters optimized
+- **Alt26:** Buy multiple contracts (4-8 week), scale out 25% at each profit level
+- **Alt22:** Buy 6-10 week QQQ calls, let SAR trail profits automatically
+- **Alt47:** Buy 8-12 week individual stock calls ONLY, avoid all ETFs!
 - Expect to hold 3-10 weeks (well within options expiration)
 - Avoid buy-and-hold strategies (Alt15, Alt17)
 
