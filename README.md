@@ -13,6 +13,192 @@ A systematic exploration of 40+ trend-following strategies, documenting the jour
 
 **New to this repository?** Start with [START_HERE.md](START_HERE.md) for a guided introduction to the sector testing workflow.
 
+---
+
+## 🔬 Methodology: How This Research Was Conducted
+
+This project represents a systematic human-AI collaboration for discovering robust trend-following strategies. Here's the exact process used, which anyone can replicate:
+
+### 1. Strategy Generation via AI
+
+**Process:** I used AI (primarily ChatGPT and Claude) to generate individual Pine Script strategies that embody **Ed Seykota's trend-following principles** while testing unique underlying theories.
+
+**Key Prompt Pattern:**
+> "Create a TradingView Pine Script strategy that follows Ed Seykota's philosophy of cutting losses and letting winners run. The strategy should test [SPECIFIC THEORY] such as [fractional pyramiding / momentum-gated entries / profit targets / etc.]. Include proper position sizing, ATR-based stops, and Donchian channel entries."
+
+**Why This Worked:**
+- AI excels at generating syntactically correct Pine Script code
+- Each strategy tested a **distinct hypothesis** (not just parameter tweaks)
+- 40+ variations created, each exploring different exit logic, sizing methods, or filters
+- AI provided consistent code structure while varying the experimental components
+
+### 2. Manual Testing in TradingView
+
+**Process:** For each AI-generated strategy, I:
+1. Copied the Pine Script code from AI into TradingView's Pine Editor
+2. Applied it to the target security (initially SPY Daily, later 21 different securities across 11 sectors)
+3. Ran the strategy tester with standardized settings:
+   - **Initial Capital:** $100,000
+   - **Commission:** 0.005% (0.5 basis points)
+   - **Slippage:** 2 ticks
+   - **Backtest Period:** Varied by security (typically 2010-2025 for maximum data)
+
+**Why Manual Testing:**
+- TradingView's visual backtest interface reveals insights automated testing misses
+- Equity curve shape matters (smooth vs choppy)
+- Zoom level indicates exit frequency (critical for options traders - see screenshot guide)
+- Trade distribution across time shows robustness
+
+### 3. Project Infrastructure via Claude Code
+
+**Process:** I used Claude Code (AI coding assistant) to build the entire project skeleton:
+
+**Folder Structure Created:**
+```
+sectors/
+├── technology-MSFT/
+│   ├── screenshots/
+│   └── strategies/
+├── healthcare-UNH/
+│   ├── screenshots/
+│   └── strategies/
+├── energy-XOM/
+├── utilities-DUK/
+├── etfs-SPY/
+├── etfs-QQQ/
+├── etfs-XLV/
+... (11 sectors total, 21 securities)
+```
+
+**What Claude Code Automated:**
+- Created 21 sector folders (11 individual stocks + 10 sector ETFs)
+- Generated standardized subfolder structure (screenshots/, strategies/)
+- Built utility scripts (resize_images.ps1 for managing screenshot sizes)
+- Created documentation templates (DISCOVERIES_AND_LEARNINGS.md, analysis.csv)
+- Set up naming conventions and file organization systems
+
+**Why This Mattered:**
+- Systematic organization prevents chaos when testing 210+ strategy-security combinations (10 strategies × 21 securities)
+- Automated folder creation ensured consistency across all sectors
+- Templates enforced disciplined documentation from day one
+
+### 4. Screenshot Capture Workflow
+
+**Process:** For every strategy backtest, I captured evidence using Windows' built-in screenshot tool:
+
+**Steps:**
+1. Run backtest in TradingView
+2. Press **Win + Shift + S** (Windows Snipping Tool)
+3. Draw selection box around TradingView's Strategy Tester panel
+4. Screenshot automatically saved to **Windows Photos** folder with timestamp
+5. Navigate to Photos folder, locate the screenshot
+6. Move screenshot from Photos to appropriate **sectors/[ticker]/screenshots/** folder
+7. Rename file to descriptive format: `alt[X]-[result]_reduced.png`
+   - Example: `alt26-very-profitable_reduced.png`
+
+**Filename Conventions:**
+- `alt[X]` = Strategy number being tested
+- `[result]` = Performance category (very-profitable, profitable, scratch, unprofitable, catastrophic)
+- `_reduced` = Indicates image has been resized (see next section)
+
+**Why Screenshots:**
+- Visual proof of every backtest result
+- Equity curve reveals characteristics automated metrics miss
+- Screenshots show TradingView's complete performance panel (trades, win rate, PF, drawdown, equity curve)
+- Creates audit trail - anyone can verify results
+
+### 5. Image Size Management
+
+**The Problem:** TradingView's high-resolution screenshots often exceeded 3000 pixels wide, which Claude Code couldn't process for analysis.
+
+**The Solution:** Created [resize_images.ps1](resize_images.ps1) PowerShell script:
+
+**What It Does:**
+```powershell
+# Reduces all images by 35% (to 65% of original size)
+# Recursively finds PNG/JPG files in all sector folders
+# Skips files already containing "_reduced" in filename
+# Uses high-quality bicubic interpolation
+# Deletes original large files after successful resize
+# Adds "_reduced" suffix to processed files
+```
+
+**Why 35% Reduction:**
+- Brings 4000px+ screenshots down to ~2600px (within Claude Code's limits)
+- Preserves visual quality for analysis (bicubic interpolation)
+- Reduces repository size significantly (hundreds of screenshots)
+- Prevents recursive resizing (skips files with `_reduced` suffix)
+
+**Usage:**
+```powershell
+.\resize_images.ps1
+# Processes all new screenshots in one batch
+# Safe to run multiple times (won't re-process reduced images)
+```
+
+### 6. Analysis and Documentation
+
+**Process:** As results came in from each strategy-security combination, I:
+
+1. **Recorded metrics** in [analysis.csv](analysis.csv):
+   - Return %, Profit Factor, Win Rate %, Max Drawdown %
+   - Trade count, performance category, options suitability
+
+2. **Documented insights** in [DISCOVERIES_AND_LEARNINGS.md](DISCOVERIES_AND_LEARNINGS.md):
+   - What worked and why
+   - What failed and why
+   - Sector-specific patterns
+   - Strategy suitability by asset type
+
+3. **Used Claude Code for pattern recognition**:
+   - Bulk analysis of screenshot results
+   - Aggregating performance across strategies
+   - Identifying strategy rankings and tier classifications
+   - Generating comparison tables and statistical summaries
+
+**Key Insight from This Process:**
+> After testing 210+ strategy-security combinations, clear patterns emerged: **Alt10 (Profit Targets)** and **Alt26 (Fractional Pyramid)** both achieved 76% success rates, while utilities failed 100% of all strategies tested. These discoveries only emerged through systematic, comprehensive testing.
+
+---
+
+### Why This Methodology Works
+
+**Reproducibility:** Every step is documented and can be replicated by anyone with:
+- TradingView account (free version works)
+- AI access for Pine Script generation (ChatGPT, Claude, etc.)
+- Windows computer for screenshot workflow
+- PowerShell for image processing
+
+**Transparency:** Nothing is hidden:
+- All 40+ strategy codes are in [pine-scripts/](pine-scripts/)
+- All screenshots are in [sectors/](sectors/) folders
+- All analysis is in [analysis.csv](analysis.csv) and [DISCOVERIES_AND_LEARNINGS.md](DISCOVERIES_AND_LEARNINGS.md)
+- Failures documented alongside successes
+
+**Systematic Discovery:** Not cherry-picking:
+- Every strategy tested on same set of securities
+- Standardized backtest settings eliminate variables
+- Failed strategies kept for learning (not deleted)
+- Honest documentation of what doesn't work
+
+**Human-AI Synergy:** Leveraging strengths of both:
+- **AI:** Generate code variations, build infrastructure, analyze patterns
+- **Human:** Visual pattern recognition, hypothesis formation, judgment calls
+- **Together:** Systematic testing at scale with qualitative insights
+
+### How You Can Replicate This
+
+1. **Generate strategies:** Ask AI to create Pine Scripts testing specific theories
+2. **Setup infrastructure:** Use Claude Code to create folder structure
+3. **Test systematically:** Run each strategy on each security, capture screenshots
+4. **Manage images:** Use resize_images.ps1 to handle screenshot sizes
+5. **Document findings:** Use templates provided to record insights
+6. **Iterate:** Learn from failures, refine theories, generate new strategies
+
+**The beauty of this approach:** It's accessible to anyone. No expensive software, no advanced coding skills, no proprietary data. Just systematic application of free tools and disciplined documentation.
+
+---
+
 ## 📂 Repository Structure
 
 ```

@@ -1,0 +1,257 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © danieltuckerrust
+// ALTERNATIVE 41: Sector-Adaptive Hybrid Strategy
+// THEORY: Different asset types need fundamentally different approaches. Stop treating utilities
+// like tech stocks! Use ADX to classify asset behavior and apply appropriate strategy:
+// - HIGH ADX (>25) = TRENDING: Alt26 fractional pyramid + trailing stops (let it run)
+// - LOW ADX (<25) = CHOPPY: Tight profit targets (2N-4N-6N) or reduced sizing (avoid whipsaws)
+//
+// INSIGHT FROM 210 BACKTESTS: Utilities failed ALL 10 strategies (0% success rate). Commodities
+// killed profit targets (FCX -32% Alt10, -20% Alt26). The problem: one-size-fits-all approach.
+// Assets TELL US their behavior through ADX - we should LISTEN and adapt strategy accordingly.
+//
+// WHY THIS SOLVES KEY PROBLEMS:
+// - Utilities (DUK, XLU): Low ADX detected → tight targets or skip → avoid catastrophic losses
+// - Tech (MSFT, QQQ): High ADX detected → fractional pyramid → capture full trends
+// - Commodities (FCX): Low ADX detected → tight targets → book profits before whipsaws
+// - Healthcare (UNH, XLV): High ADX detected → ride clean trends with trailing stops
+//
+// Trade-off: Adds complexity (dual strategy paths), but theoretically sound - match strategy to asset.
+// For options traders: Both paths have regular exits (trailing stops or tight targets = 2-8 weeks)
+
+//@version=6
+strategy("Seykota Alt 41: Sector-Adaptive v1.0",
+     overlay=true,
+     initial_capital=100000,
+     commission_type=strategy.commission.percent, commission_value=0.005,
+     slippage=2,
+     default_qty_type=strategy.fixed, default_qty_value=0,
+     pyramiding=10,
+     max_bars_back=5000)
+
+//================ Inputs
+allowLong   = input.bool(true,  "Allow LONGs?")
+allowShort  = input.bool(true,  "Allow SHORTs?")
+
+// Entry
+entryLen    = input.int(55,     "Donchian ENTRY lookback",            minval=10)
+nLen        = input.int(20,     "N = ATR length",                     minval=5)
+stopN       = input.float(2.0,  "Initial stop (in N)",                minval=0.5, step=0.25)
+
+// ADX Regime Detection (KEY INNOVATION)
+adxLen      = input.int(14,     "ADX length for regime detection",    minval=5)
+adxThreshold = input.float(25.0, "ADX threshold (>25 = trending)",   minval=15, maxval=40, step=1)
+
+// TRENDING PATH (High ADX): Fractional pyramid + trailing stops
+trailLen    = input.int(22,     "[TRENDING] Chandelier trail lookback", minval=5)
+trailN      = input.float(3.0,  "[TRENDING] Chandelier trail (in N)",   minval=0.5, step=0.25)
+addStepN    = input.float(0.5,  "[TRENDING] Add every X * N",           minval=0.25, step=0.25)
+maxUnits    = input.int(4,      "[TRENDING] Max units (fractional)",    minval=1, maxval=10)
+riskPct     = input.float(1.0,  "[TRENDING] Risk % for FIRST unit",     minval=0.1, maxval=5, step=0.1)
+
+// CHOPPY PATH (Low ADX): Tight profit targets
+choppyTarget1N = input.float(2.0, "[CHOPPY] Tight Target 1 (in N)",    minval=0.5, step=0.5)
+choppyTarget2N = input.float(4.0, "[CHOPPY] Tight Target 2 (in N)",    minval=1, step=0.5)
+choppyTarget3N = input.float(6.0, "[CHOPPY] Tight Target 3 (in N)",    minval=1, step=0.5)
+choppyRiskPct  = input.float(0.5, "[CHOPPY] Risk % (reduced for chop)", minval=0.1, maxval=3, step=0.1)
+
+// Optional market filter
+useMarket   = input.bool(false, "Use market regime filter?")
+marketSym   = input.symbol("SPY", "Market symbol for regime")
+marketTF    = input.timeframe("D", "Regime timeframe")
+marketLen   = input.int(200,    "Market MA length",                   minval=50)
+
+minVol      = input.int(0,      "Min 20-bar avg volume",              minval=0)
+showSignals = input.bool(true,  "Plot signals & stops?")
+plotDon     = input.bool(true,  "Plot Donchian bands?")
+
+// Backtest range
+fromDate = input.time(defval=timestamp("2010-01-01T00:00:00"), title="Backtest FROM")
+toDate   = input.time(defval=timestamp("2099-12-31T23:59:59"), title="Backtest TO")
+flatAtFrom = input.bool(true, "Force FLAT at range start?")
+
+// Force flat at range start
+isRangeStart = (time[1] < fromDate) and (time >= fromDate)
+if flatAtFrom and isRangeStart and strategy.position_size != 0
+    strategy.close_all(comment="Flat at FROM")
+
+//================ ADX Calculation
+dirmov(len) =>
+    up = ta.change(high)
+    down = -ta.change(low)
+    plusDM = na(up) ? na : (up > down and up > 0 ? up : 0)
+    minusDM = na(down) ? na : (down > up and down > 0 ? down : 0)
+    truerange = ta.rma(ta.tr, len)
+    plus = fixnan(100 * ta.rma(plusDM, len) / truerange)
+    minus = fixnan(100 * ta.rma(minusDM, len) / truerange)
+    [plus, minus]
+
+adx(dilen, adxlen) =>
+    [plus, minus] = dirmov(dilen)
+    sum = plus + minus
+    adxValue = 100 * ta.rma(math.abs(plus - minus) / (sum == 0 ? 1 : sum), adxlen)
+    adxValue
+
+adxValue = adx(adxLen, adxLen)
+isTrending = adxValue > adxThreshold  // HIGH ADX = use fractional pyramid path
+isChoppy = adxValue <= adxThreshold   // LOW ADX = use tight targets path
+
+//================ Core Calculations
+inRange = (time >= fromDate) and (time <= toDate)
+N = ta.atr(nLen)
+
+// Donchian channels
+donUp = ta.highest(high, entryLen)
+donDn = ta.lowest(low, entryLen)
+
+// Chandelier trailing (for trending path)
+// FIXED: Chandelier stops trail in the correct direction
+trailDn = ta.highest(high, trailLen) - trailN * N  // For LONG positions (stop below)
+trailUp = ta.lowest(low, trailLen)  + trailN * N   // For SHORT positions (stop above)
+
+// Market regime filter
+var float mktPrice = na
+var float mktMA = na
+if useMarket
+    mktPrice := request.security(marketSym, marketTF, close)
+    mktMA := request.security(marketSym, marketTF, ta.sma(close, marketLen))
+
+mktLongOK = (not useMarket) or (mktPrice > mktMA)
+mktShortOK = (not useMarket) or (mktPrice < mktMA)
+
+// Volume filter
+avgVol = ta.sma(volume, 20)
+volOK = (minVol == 0) or (avgVol >= minVol)
+
+//================ Position Sizing Functions
+
+// TRENDING PATH: Fractional pyramid (100%, 75%, 50%, 25%)
+sharesForUnitTrending(_e, _n, _u) =>
+    r = _e * (riskPct / 100.0)
+    psr = math.max(stopN * _n, syminfo.mintick)
+    baseShares = math.max(1, math.floor(r / psr))
+    fraction = _u == 1 ? 1.0 : (_u == 2 ? 0.75 : (_u == 3 ? 0.5 : 0.25))
+    math.max(1, math.floor(baseShares * fraction))
+
+// CHOPPY PATH: Single position with reduced risk
+sharesForChoppy(_e, _n) =>
+    r = _e * (choppyRiskPct / 100.0)
+    psr = math.max(stopN * _n, syminfo.mintick)
+    math.max(1, math.floor(r / psr))
+
+//================ Entry Logic
+
+var int unitCount = 0
+var float entryPrice = na
+var bool entryWasTrending = false  // Remember which path we took on entry
+
+// Long entry
+longEntry = allowLong and inRange and mktLongOK and volOK and (close > donUp[1])
+if longEntry and strategy.position_size == 0
+    entryPrice := close
+    entryWasTrending := isTrending  // Lock in the strategy path
+    if isTrending
+        // TRENDING PATH: Start fractional pyramid
+        qty = sharesForUnitTrending(strategy.equity, N, 1)
+        strategy.entry("L1", strategy.long, qty=qty, comment="L1-TREND")
+        unitCount := 1
+    else
+        // CHOPPY PATH: Single position with tight targets
+        qty = sharesForChoppy(strategy.equity, N)
+        strategy.entry("L1", strategy.long, qty=qty, comment="L1-CHOP")
+        unitCount := 1
+
+// Short entry
+shortEntry = allowShort and inRange and mktShortOK and volOK and (close < donDn[1])
+if shortEntry and strategy.position_size == 0
+    entryPrice := close
+    entryWasTrending := isTrending  // Lock in the strategy path
+    if isTrending
+        // TRENDING PATH: Start fractional pyramid
+        qty = sharesForUnitTrending(strategy.equity, N, 1)
+        strategy.entry("S1", strategy.short, qty=qty, comment="S1-TREND")
+        unitCount := 1
+    else
+        // CHOPPY PATH: Single position with tight targets
+        qty = sharesForChoppy(strategy.equity, N)
+        strategy.entry("S1", strategy.short, qty=qty, comment="S1-CHOP")
+        unitCount := 1
+
+//================ Pyramiding (TRENDING PATH ONLY)
+
+isLong = strategy.position_size > 0
+isShort = strategy.position_size < 0
+
+if isLong and entryWasTrending and unitCount < maxUnits
+    addPrice = entryPrice + (unitCount * addStepN * N)
+    if close >= addPrice
+        unitCount += 1
+        qty = sharesForUnitTrending(strategy.equity, N, unitCount)
+        label = "L" + str.tostring(unitCount)
+        strategy.entry(label, strategy.long, qty=qty, comment=label + "-ADD")
+
+if isShort and entryWasTrending and unitCount < maxUnits
+    addPrice = entryPrice - (unitCount * addStepN * N)
+    if close <= addPrice
+        unitCount += 1
+        qty = sharesForUnitTrending(strategy.equity, N, unitCount)
+        label = "S" + str.tostring(unitCount)
+        strategy.entry(label, strategy.short, qty=qty, comment=label + "-ADD")
+
+//================ Exit Logic
+
+// TRENDING PATH: Chandelier trailing stops
+if isLong and entryWasTrending
+    strategy.exit("Trail-L", from_entry="L1", stop=trailDn, comment="Trail-L")
+    for i = 2 to maxUnits
+        strategy.exit("Trail-L" + str.tostring(i), from_entry="L" + str.tostring(i), stop=trailDn, comment="Trail-L")
+
+if isShort and entryWasTrending
+    strategy.exit("Trail-S", from_entry="S1", stop=trailUp, comment="Trail-S")
+    for i = 2 to maxUnits
+        strategy.exit("Trail-S" + str.tostring(i), from_entry="S" + str.tostring(i), stop=trailUp, comment="Trail-S")
+
+// CHOPPY PATH: Tight profit targets
+if isLong and not entryWasTrending
+    target1 = entryPrice + (choppyTarget1N * N)
+    target2 = entryPrice + (choppyTarget2N * N)
+    target3 = entryPrice + (choppyTarget3N * N)
+    stopLoss = entryPrice - (stopN * N)
+
+    strategy.exit("T1-L", from_entry="L1", stop=stopLoss, limit=target1, qty_percent=33, comment="T1-L")
+    strategy.exit("T2-L", from_entry="L1", stop=stopLoss, limit=target2, qty_percent=50, comment="T2-L")
+    strategy.exit("T3-L", from_entry="L1", stop=stopLoss, limit=target3, comment="T3-L")
+
+if isShort and not entryWasTrending
+    target1 = entryPrice - (choppyTarget1N * N)
+    target2 = entryPrice - (choppyTarget2N * N)
+    target3 = entryPrice - (choppyTarget3N * N)
+    stopLoss = entryPrice + (stopN * N)
+
+    strategy.exit("T1-S", from_entry="S1", stop=stopLoss, limit=target1, qty_percent=33, comment="T1-S")
+    strategy.exit("T2-S", from_entry="S1", stop=stopLoss, limit=target2, qty_percent=50, comment="T2-S")
+    strategy.exit("T3-S", from_entry="S1", stop=stopLoss, limit=target3, comment="T3-S")
+
+// Reset unit count when flat
+if strategy.position_size == 0
+    unitCount := 0
+    entryPrice := na
+    entryWasTrending := false
+
+//================ Plotting
+plot(plotDon ? donUp : na, "Don Upper", color=color.green, linewidth=1)
+plot(plotDon ? donDn : na, "Don Lower", color=color.red, linewidth=1)
+
+plot(showSignals and entryWasTrending and isLong ? trailDn : na, "Trail Stop L", color=color.red, linewidth=2, style=plot.style_cross)
+plot(showSignals and entryWasTrending and isShort ? trailUp : na, "Trail Stop S", color=color.lime, linewidth=2, style=plot.style_cross)
+
+// Show regime on chart
+bgcolor(isTrending ? color.new(color.green, 95) : color.new(color.red, 95), title="Regime: Green=Trending, Red=Choppy")
+
+// Show ADX value
+var label adxLabel = na
+if barstate.islast and showSignals
+    label.delete(adxLabel)
+    adxColor = isTrending ? color.green : color.red
+    adxText = "ADX: " + str.tostring(adxValue, "#.#") + (isTrending ? " (TREND)" : " (CHOP)")
+    adxLabel := label.new(bar_index, high, adxText, color=adxColor, textcolor=color.white, style=label.style_label_down)

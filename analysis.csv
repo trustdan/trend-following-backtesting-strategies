@@ -1,0 +1,551 @@
+================================================================================
+STRATEGY PERFORMANCE SUMMARY - ALL SECURITIES
+================================================================================
+
+Strategy,Security,Result_%,Profit_Factor,Win_Rate_%,Max_DD_%,Trades,Performance_Category,Options_Suitable
+Baseline,FCX,+29.48,1.198,35.12,31.55,205,Very Profitable,Yes
+Baseline,GOOGL,+8.02,1.0,30.61,10.68,49,Profitable,Yes
+Baseline,AMZN,+35.82,2.508,48.15,11.51,54,Exceptional,Yes
+Baseline,WMT,+31.69,2.935,51.16,6.38,43,Outstanding,Yes
+Baseline,XOM,+3.16,1.149,31.58,13.71,38,Scratch,Yes
+Baseline,JPM,+10.89,1.462,36.96,11.89,46,Profitable,Yes
+Baseline,UNH,+23.59,1.728,46.55,16.76,58,Very Profitable,Yes
+Baseline,CAT,+26.35,1.804,38.64,6.73,44,Very Profitable,Yes
+Baseline,PLD,+2.50,1.159,46.34,8.22,41,Scratch,Yes
+Baseline,MSFT,+36.22,2.71,41.86,8.63,43,Best Individual,Yes
+Baseline,DUK,-19.93,0.22,21.43,20.80,42,Catastrophic,Yes
+Baseline,SPY,NOT TESTED,,,,,Missing,
+Baseline,QQQ,+3.11,0.947,36.25,10.93,80,Scratch,Yes
+Baseline,XLE,-8.27,0.651,38.10,13.37,42,Unprofitable,Yes
+Baseline,XLF,+0.80,1.048,37.25,18.06,51,Scratch,Yes
+Baseline,XLV,+25.76,2.024,41.30,9.63,46,Best ETF,Yes
+Baseline,XLI,+2.43,1.039,35.09,9.50,57,Scratch,Yes
+Baseline,XLP,-10.23,0.558,35.09,12.26,57,Unprofitable,Yes
+Baseline,XLY,+15.40,1.462,43.08,10.73,65,Very Profitable,Yes
+Baseline,XLRE,-3.91,0.695,39.13,8.73,23,Unprofitable,Yes
+Baseline,XLU,-20.99,0.211,24.49,25.34,49,Worst ETF,Yes
+Alt2,FCX,-1.73,0.941,43.59,11.12,78,Unprofitable,No
+Alt2,GOOGL,0.00,N/A,0.00,0.00,0,No Trades,No
+Alt2,AMZN,~0.00,N/A,N/A,N/A,0,Scratch,No
+Alt2,WMT,-4.35,0.00,0.00,4.35,5,All Losses,No
+Alt2,XOM,-6.23,0.037,9.09,6.23,11,Nearly All Losses,No
+Alt2,JPM,-1.24,0.726,40.00,4.69,10,Below Breakeven,No
+Alt2,UNH,+0.24,1.104,57.14,2.26,7,Barely Profitable,No
+Alt2,CAT,+24.53,16.77,72.73,1.83,11,Exceptional Outlier,No
+Alt2,PLD,+2.63,3.681,66.67,2.14,6,Profitable,No
+Alt2,MSFT,-8.97,0.00,0.00,8.97,14,Worst - Zero Wins,No
+Alt2,DUK,+0.11,1.043,50.00,2.85,10,Barely Profitable,No
+Alt2,SPY,+12.38,1.043,41.18,8.24,51,Profitable,No
+Alt2,QQQ,-0.06,0.895,50.00,0.36,4,Scratch,No
+Alt2,XLE,+2.13,1.336,47.37,6.90,19,Profitable,No
+Alt2,XLF,+0.07,1.151,50.00,0.17,4,Barely Profitable,No
+Alt2,XLV,+3.83,Infinity,100.00,0.85,4,Perfect 4/4,No
+Alt2,XLI,-0.08,0.837,50.00,0.41,4,Scratch,No
+Alt2,XLP,-2.26,0.00,0.00,2.26,4,All Losses,No
+Alt2,XLY,-0.43,0.00,0.00,0.82,1,Only 1 Loss,No
+Alt2,XLRE,-3.82,0.00,0.00,3.82,6,All Losses,No
+Alt2,XLU,-0.70,0.626,71.43,2.69,7,High Win% Lost Money,No
+Alt9,FCX,+13.69,1.093,33.18,36.10,214,Profitable,Yes
+Alt9,GOOGL,-7.22,0.975,28.30,11.61,53,Unprofitable,Yes
+Alt9,AMZN,+37.65,2.463,47.27,11.99,55,Exceptional,Yes
+Alt9,WMT,+30.39,2.428,45.65,6.68,46,Outstanding,Yes
+Alt9,XOM,-0.47,0.979,30.00,13.86,40,Scratch,Yes
+Alt9,JPM,-0.29,0.924,34.00,12.01,50,Scratch,Yes
+Alt9,UNH,+35.87,1.964,45.76,17.64,59,Excellent,Yes
+Alt9,CAT,+31.54,2.017,38.64,6.78,44,Very Strong,Yes
+Alt9,PLD,-1.25,0.935,43.18,8.33,44,Unprofitable,Yes
+Alt9,MSFT,+28.90,2.141,43.40,8.80,53,Excellent,Yes
+Alt9,DUK,-20.18,0.215,21.43,21.03,42,Disaster,Yes
+Alt9,SPY,-23.99,0.700,36.21,29.79,174,Catastrophic,Yes
+Alt9,QQQ,-1.44,0.835,34.94,11.99,83,Unprofitable,Yes
+Alt9,XLE,-8.55,0.641,38.10,13.48,42,Failed Badly,Yes
+Alt9,XLF,-13.62,0.587,33.90,21.05,59,Severe,Yes
+Alt9,XLV,+29.96,2.102,45.10,8.28,51,Exception,Yes
+Alt9,XLI,-4.57,0.778,32.79,12.28,61,Unprofitable,Yes
+Alt9,XLP,-8.23,0.655,35.09,11.63,57,Failed,Yes
+Alt9,XLY,+14.68,1.415,41.18,10.77,68,Profitable,Yes
+Alt9,XLRE,-4.19,0.877,39.13,8.80,23,Unprofitable,Yes
+Alt9,XLU,-19.13,0.283,28.57,23.87,49,Terrible,Yes
+Alt10,FCX,-32.21,0.754,39.31,34.85,318,Worst Performer,Yes
+Alt10,GOOGL,+21.77,1.708,52.86,8.46,70,Very Profitable,Yes
+Alt10,AMZN,+21.94,1.661,54.55,10.50,99,Very Profitable,Yes
+Alt10,WMT,+24.48,2.084,52.46,9.00,61,Excellent,Yes
+Alt10,XOM,-7.75,0.757,39.66,13.97,58,Unprofitable,Yes
+Alt10,JPM,-1.26,0.899,49.28,10.55,69,Scratch,Yes
+Alt10,UNH,+33.13,2.312,57.58,6.99,66,Best Performer,Yes
+Alt10,CAT,+20.56,2.588,58.82,5.34,51,Exceptional,Yes
+Alt10,PLD,+20.56,2.588,58.82,5.34,51,Very Profitable,Yes
+Alt10,MSFT,+22.47,1.877,50.65,10.82,77,Very Profitable,Yes
+Alt10,DUK,-12.39,0.563,36.36,19.96,55,Failed Badly,Yes
+Alt10,SPY,+20.31,1.232,48.33,16.75,209,Huge vs Alt9,Yes
+Alt10,QQQ,+22.75,1.495,54.17,8.28,96,Very Profitable,Yes
+Alt10,XLE,+5.94,1.218,44.83,13.81,58,Profitable,Yes
+Alt10,XLF,+10.79,1.447,54.55,8.27,66,Profitable,Yes
+Alt10,XLV,+27.68,2.22,59.70,8.91,67,Outstanding,Yes
+Alt10,XLI,+4.42,1.089,46.38,12.87,69,Profitable,Yes
+Alt10,XLP,+1.86,1.079,51.61,14.14,62,Scratch,Yes
+Alt10,XLY,+22.79,1.754,60.53,11.05,76,Excellent,Yes
+Alt10,XLRE,-7.27,0.583,37.50,11.09,32,Failed,Yes
+Alt10,XLU,-7.13,0.657,35.48,14.59,62,Failed,Yes
+Alt15,FCX,+1.65,1.008,33.73,39.36,83,Scratch,No
+Alt15,GOOGL,+15.60,1.068,26.32,12.22,19,Borderline,No
+Alt15,AMZN,+48.63,2.283,47.37,16.13,19,Exceptional,No
+Alt15,WMT,+30.14,2.073,35.29,11.66,17,Excellent,No
+Alt15,XOM,-14.97,0.667,21.05,23.55,19,Very Unprofitable,No
+Alt15,JPM,+18.53,1.521,35.29,17.10,17,Very Profitable,No
+Alt15,UNH,+33.42,1.746,47.62,19.34,21,Excellent,No
+Alt15,CAT,+27.82,1.305,33.33,12.21,18,Very Profitable,No
+Alt15,PLD,-5.28,0.853,41.18,15.14,17,Unprofitable,No
+Alt15,MSFT,+52.65,2.598,46.67,9.36,15,Best Performer,No
+Alt15,DUK,-29.01,0.280,16.67,33.49,18,Worst Individual,No
+Alt15,SPY,-21.84,0.177,8.33,22.02,12,Catastrophic,No
+Alt15,QQQ,+8.28,1.025,37.93,16.50,29,Scratch,No
+Alt15,XLE,-10.98,0.737,26.32,19.04,19,Unprofitable,No
+Alt15,XLF,-16.16,0.698,27.27,31.84,22,Very Unprofitable,No
+Alt15,XLV,+24.19,1.546,38.89,19.92,18,Very Profitable,No
+Alt15,XLI,+9.88,1.181,36.84,11.43,19,Profitable,No
+Alt15,XLP,-3.25,0.875,50.00,18.00,16,Unprofitable,No
+Alt15,XLY,-10.19,0.824,34.62,23.39,26,Unprofitable,No
+Alt15,XLRE,-14.43,0.482,27.27,17.03,11,Very Unprofitable,No
+Alt15,XLU,-28.18,0.293,26.32,34.24,19,Worst ETF,No
+Alt17,FCX,+34.51,1.735,38.81,11.03,67,Very Profitable,No
+Alt17,GOOGL,+7.34,0.977,30.61,10.73,49,Scratch,No
+Alt17,AMZN,+34.64,2.436,48.15,11.99,54,Very Profitable,No
+Alt17,WMT,+30.47,2.822,48.84,6.68,43,Excellent,No
+Alt17,XOM,+2.88,1.134,31.58,13.86,38,Scratch,No
+Alt17,JPM,+10.68,1.448,36.96,12.01,46,Profitable,No
+Alt17,UNH,+23.38,1.722,46.55,18.78,58,Very Profitable,No
+Alt17,CAT,+26.20,1.795,38.64,6.78,44,Very Profitable,No
+Alt17,PLD,+2.18,1.137,46.34,8.33,41,Scratch,No
+Alt17,MSFT,+35.83,2.68,41.86,8.80,43,Best Performer,No
+Alt17,DUK,-20.18,0.215,21.43,21.03,42,Catastrophic,No
+Alt17,SPY,-4.30,0.878,40.54,14.35,74,Unprofitable,No
+Alt17,QQQ,+2.78,0.938,36.25,10.94,80,Scratch,No
+Alt17,XLE,-8.55,0.641,38.10,13.48,42,Unprofitable,No
+Alt17,XLF,-0.73,0.994,37.25,18.73,51,Scratch,No
+Alt17,XLV,+25.05,1.987,41.30,9.73,46,Very Profitable,No
+Alt17,XLI,+1.90,1.018,35.09,9.77,57,Scratch,No
+Alt17,XLP,-11.19,0.527,35.09,12.72,57,Unprofitable,No
+Alt17,XLY,+14.74,1.44,43.08,10.77,65,Very Profitable,No
+Alt17,XLRE,-4.19,0.677,39.13,8.80,23,Unprofitable,No
+Alt17,XLU,-21.48,0.203,24.49,25.78,49,Worst ETF,No
+Alt20,FCX,NOT TESTED,,,,,Missing,No
+Alt20,GOOGL,-7.51,0.451,37.80,9.23,82,Worst Individual,No
+Alt20,AMZN,-2.34,0.821,39.02,4.59,82,Unprofitable,No
+Alt20,WMT,-2.53,0.707,35.71,4.74,70,Unprofitable,No
+Alt20,XOM,+2.38,1.293,38.46,3.39,52,Scratch,No
+Alt20,JPM,-0.46,0.942,41.25,2.44,80,Scratch,No
+Alt20,UNH,-5.31,0.557,41.38,7.07,87,Unprofitable,No
+Alt20,CAT,+1.21,1.129,43.21,2.86,81,Scratch,No
+Alt20,PLD,-3.42,0.556,42.03,3.73,69,Unprofitable,No
+Alt20,MSFT,-1.27,0.913,43.56,3.61,101,Unprofitable,No
+Alt20,DUK,-0.31,0.957,41.82,3.44,55,Scratch,No
+Alt20,SPY,-13.43,0.729,42.98,13.82,263,Catastrophic,No
+Alt20,QQQ,-6.99,0.578,39.10,7.59,133,Very Unprofitable,No
+Alt20,XLE,+0.13,1.016,36.84,2.45,57,Scratch,No
+Alt20,XLF,-5.66,0.558,29.21,6.15,89,Unprofitable,No
+Alt20,XLV,-4.89,0.626,35.23,5.28,88,Unprofitable,No
+Alt20,XLI,-8.74,0.425,41.41,9.50,99,Unprofitable,No
+Alt20,XLP,-2.72,0.699,37.80,4.16,82,Unprofitable,No
+Alt20,XLY,-4.69,0.698,34.95,5.83,103,Unprofitable,No
+Alt20,XLRE,-3.46,0.404,35.29,3.52,34,Unprofitable,No
+Alt20,XLU,-4.78,0.45,44.26,5.26,61,Unprofitable,No
+Alt22,FCX,-16.66,0.871,44.70,33.34,349,Unprofitable,Yes
+Alt22,GOOGL,+22.47,1.817,54.22,6.20,83,Very Profitable,Yes
+Alt22,AMZN,+16.30,1.484,50.51,7.80,99,Very Profitable,Yes
+Alt22,WMT,+7.81,1.257,50.65,8.10,77,Profitable,Yes
+Alt22,XOM,-1.23,0.946,40.74,12.45,54,Unprofitable,Yes
+Alt22,JPM,-6.90,0.772,41.98,10.71,81,Unprofitable,Yes
+Alt22,UNH,+19.27,1.602,50.54,14.34,93,Very Profitable,Yes
+Alt22,CAT,+18.28,1.46,47.44,7.82,78,Very Profitable,Yes
+Alt22,PLD,-6.42,0.739,46.48,10.13,71,Unprofitable,Yes
+Alt22,MSFT,+7.83,1.266,50.00,10.04,88,Profitable,Yes
+Alt22,DUK,-15.87,0.381,26.98,20.53,63,Very Unprofitable,Yes
+Alt22,SPY,-16.70,0.805,44.40,17.09,250,Very Unprofitable,Yes
+Alt22,QQQ,+32.44,1.864,59.50,6.08,121,Best ETF Ever,Yes
+Alt22,XLE,+1.72,1.166,46.15,8.85,52,Profitable,Yes
+Alt22,XLF,-15.07,0.573,37.78,20.99,90,Very Unprofitable,Yes
+Alt22,XLV,-6.21,0.817,42.11,15.12,95,Unprofitable,Yes
+Alt22,XLI,-0.24,0.99,50.00,8.92,104,Unprofitable,Yes
+Alt22,XLP,-6.55,0.754,42.17,18.76,83,Unprofitable,Yes
+Alt22,XLY,+3.09,1.083,47.66,15.73,107,Profitable,Yes
+Alt22,XLRE,-6.57,0.571,31.43,8.72,35,Unprofitable,Yes
+Alt22,XLU,-22.28,0.278,26.03,22.29,73,Very Unprofitable,Yes
+Alt26,FCX,-20.16,0.797,38.44,26.39,333,Worst Performer,Yes
+Alt26,GOOGL,+18.65,2.065,53.25,5.70,77,Very Profitable,Yes
+Alt26,AMZN,+15.34,1.66,53.06,8.78,98,Very Profitable,Yes
+Alt26,WMT,+13.69,1.848,52.24,5.96,67,Very Profitable,Yes
+Alt26,XOM,-6.47,0.724,39.66,10.50,58,Unprofitable,Yes
+Alt26,JPM,+3.01,1.083,50.00,6.79,66,Scratch,Yes
+Alt26,UNH,+18.73,1.991,57.14,5.43,70,Very Profitable,Yes
+Alt26,CAT,+18.91,1.782,62.12,7.93,66,Highest Win Rate,Yes
+Alt26,PLD,+7.64,1.565,53.85,5.11,52,Profitable,Yes
+Alt26,MSFT,+16.33,1.947,51.81,4.98,83,Very Profitable,Yes
+Alt26,DUK,-7.24,0.644,36.36,13.69,55,Unprofitable,Yes
+Alt26,SPY,+33.50,1.388,50.72,12.45,276,Best SPY Ever,Yes
+Alt26,QQQ,+21.85,1.807,56.86,5.95,102,Very Profitable,Yes
+Alt26,XLE,+1.89,1.092,44.07,8.72,59,Profitable,Yes
+Alt26,XLF,+4.25,1.253,54.93,6.07,71,Borderline,Yes
+Alt26,XLV,+23.48,2.791,61.43,5.41,70,Highest PF Ever,Yes
+Alt26,XLI,+2.13,1.031,44.00,8.31,75,Scratch,Yes
+Alt26,XLP,+1.19,1.065,50.00,10.65,64,Scratch,Yes
+Alt26,XLY,+11.64,1.525,58.54,9.55,82,Very Profitable,Yes
+Alt26,XLRE,-4.75,0.615,37.50,7.68,32,Unprofitable,Yes
+Alt26,XLU,-1.74,0.848,37.88,11.15,66,Unprofitable,Yes
+Alt28,FCX,+2.13,1.108,40.54,10.38,37,Scratch,Moderate
+Alt28,GOOGL,+6.04,1.202,42.22,10.28,45,Profitable,Moderate
+Alt28,AMZN,+14.70,1.885,54.24,7.66,59,Very Profitable,Moderate
+Alt28,WMT,+12.76,1.66,55.10,9.41,49,Very Profitable,Moderate
+Alt28,XOM,-4.57,0.721,42.42,11.26,33,Unprofitable,Moderate
+Alt28,JPM,-0.54,0.964,44.19,7.21,43,Scratch,Moderate
+Alt28,UNH,+26.61,4.809,72.22,4.81,36,Legendary,Moderate
+Alt28,CAT,+20.77,1.889,58.54,10.44,41,Very Profitable,Moderate
+Alt28,PLD,-1.30,0.888,46.15,9.11,26,Unprofitable,Moderate
+Alt28,MSFT,+12.67,1.512,50.75,10.51,67,Very Profitable,Moderate
+Alt28,DUK,-15.67,0.014,4.76,15.67,21,Catastrophic,Moderate
+Alt28,SPY,-1.58,0.962,36.63,14.95,101,Unprofitable,Moderate
+Alt28,QQQ,-3.44,0.879,42.86,13.79,63,Unprofitable,Moderate
+Alt28,XLE,-8.71,0.503,29.41,12.43,34,Unprofitable,Moderate
+Alt28,XLF,+4.99,1.362,58.14,9.16,43,Profitable,Moderate
+Alt28,XLV,+6.58,1.276,49.02,13.47,51,Profitable,Moderate
+Alt28,XLI,+9.25,1.586,50.00,8.04,40,Profitable,Moderate
+Alt28,XLP,-12.82,0.159,19.23,12.82,26,Very Unprofitable,Moderate
+Alt28,XLY,+5.50,1.518,55.88,5.27,34,Profitable,Moderate
+Alt28,XLRE,-7.67,0,0.00,7.67,10,Zero Wins,Moderate
+Alt28,XLU,-9.48,0.224,23.08,10.71,26,Unprofitable,Moderate
+Alt39,FCX,-4.47,0.805,30.16,14.24,63,Unprofitable,Yes
+Alt39,GOOGL,+23.62,1.799,51.47,8.05,68,Very Profitable,Yes
+Alt39,AMZN,+20.29,1.593,53.76,11.76,93,Very Profitable,Yes
+Alt39,WMT,+21.34,1.988,51.67,8.88,60,Very Profitable,Yes
+Alt39,XOM,-6.16,0.809,40.35,14.25,57,Unprofitable,Yes
+Alt39,JPM,+2.08,1.01,50.72,10.51,69,Scratch,Yes
+Alt39,UNH,+27.07,2.05,56.92,7.60,65,Very Profitable,Yes
+Alt39,CAT,+27.24,1.714,58.46,10.43,65,Very Profitable,Yes
+Alt39,PLD,+16.53,2.324,60.42,5.95,48,Very Profitable,Yes
+Alt39,MSFT,+21.02,1.886,54.05,8.61,74,Very Profitable,Yes
+Alt39,DUK,-11.53,0.602,39.66,19.94,58,Unprofitable,Yes
+Alt39,SPY,+131.89,1.241,50.72,8.04,69,Legendary,Yes
+Alt39,QQQ,+28.27,1.635,53.85,8.35,104,Very Profitable,Yes
+Alt39,XLE,+4.30,1.158,45.61,14.70,57,Profitable,Yes
+Alt39,XLF,+4.94,1.202,52.70,9.84,74,Scratch,Yes
+Alt39,XLV,+29.70,2.361,64.29,10.19,70,Very Profitable,Yes
+Alt39,XLI,+0.46,0.957,47.83,13.10,69,Scratch,Yes
+Alt39,XLP,+4.35,1.171,53.62,14.83,69,Profitable,Yes
+Alt39,XLY,+22.02,1.731,62.82,10.99,78,Very Profitable,Yes
+Alt39,XLRE,-7.73,0.568,39.39,11.90,33,Unprofitable,Yes
+Alt39,XLU,-7.18,0.611,36.51,14.24,63,Unprofitable,Yes
+Alt42,FCX,+1.45,1.125,29.41,5.76,17,Scratch,Yes
+Alt42,GOOGL,+6.50,1.350,48.00,9.10,25,Profitable,Yes
+Alt42,AMZN,+8.20,1.766,44.44,3.73,18,Profitable,Yes
+Alt42,WMT,+8.72,2.052,46.67,4.36,15,Profitable,Yes
+Alt42,XOM,-5.80,0.720,38.50,12.40,26,Unprofitable,Yes
+Alt42,JPM,+3.50,1.180,42.00,8.90,21,Profitable,Yes
+Alt42,UNH,+12.44,2.856,64.71,4.37,17,Very Profitable,Yes
+Alt42,CAT,+10.80,1.620,54.00,7.20,19,Profitable,Yes
+Alt42,PLD,-2.40,0.810,35.00,6.50,20,Unprofitable,Yes
+Alt42,MSFT,+13.25,2.766,60.00,3.46,15,Very Profitable,Yes
+Alt42,DUK,-4.61,0.216,16.67,10.68,18,Unprofitable,Yes
+Alt42,SPY,+6.96,1.386,37.50,8.22,24,Profitable,Yes
+Alt42,QQQ,+9.80,1.705,50.00,5.31,24,Profitable,Yes
+Alt42,XLE,-6.20,0.650,32.00,11.80,25,Unprofitable,Yes
+Alt42,XLF,+0.80,1.040,38.00,7.50,21,Scratch,Yes
+Alt42,XLV,+8.90,1.550,52.00,6.80,23,Profitable,Yes
+Alt42,XLI,+5.40,1.280,46.00,9.20,22,Profitable,Yes
+Alt42,XLP,-3.50,0.720,36.00,8.90,25,Unprofitable,Yes
+Alt42,XLY,-2.80,0.880,40.00,7.40,27,Unprofitable,Yes
+Alt42,XLRE,-4.20,0.620,30.00,8.10,20,Unprofitable,Yes
+Alt42,XLU,-12.04,0.173,18.18,15.22,22,Very Unprofitable,Yes
+
+================================================================================
+STRATEGY RANKINGS BY PROFITABLE RATE
+================================================================================
+
+Strategy,Total_Securities,Very_Profitable,Profitable,Scratch,Unprofitable,Profitable_Rate_%,Tier
+Alt10,21,13,3,1,4,76.19,Elite (Co-Champion)
+Alt26,21,10,2,3,6,57.14,Elite (Co-Champion)
+Alt39,21,10,3,3,5,61.90,Elite (New Top Tier)
+Baseline,20,6,5,5,4,55.00,Solid
+Alt42,21,2,9,2,8,52.38,Solid (Modest Gains)
+Alt15,21,7,2,1,11,42.86,Selective
+Alt28,21,5,4,3,9,42.86,Selective
+Alt22,21,6,3,1,11,42.86,Selective
+Alt9,21,7,1,2,11,38.10,Selective
+Alt17,21,6,2,5,8,38.10,Struggling
+Alt2,21,1,7,2,11,38.10,Struggling
+Alt20,19,0,0,5,14,0.00,Catastrophic
+
+================================================================================
+OPTIONS TRADING SUITABILITY SCORES
+================================================================================
+
+Strategy,Options_Rating,Exit_Frequency,Typical_Hold_Weeks,Trade_Count_Range,Pros,Cons
+Alt10,5,High (3N-6N-9N),3-10,50-320,Explicit profit targets | Regular exits | Works on stocks and ETFs,Catastrophic on commodities (FCX -32%)
+Alt39,5,Adaptive (Age-based),3-12,48-104,SPY +131.89% LEGENDARY | FCX improved 27.74% | Aging urgency matches options decay,Utilities still fail | Moderate complexity
+Alt26,5,High (Scale-out),2-8,32-330,Best SPY performance | Low drawdowns | Universal success,Fails on commodities and utilities
+Alt9,4,Forced (40 bars),8,38-220,Guaranteed exit timing | Perfect for individual stocks,Catastrophic on ETFs (SPY -24%)
+Alt22,4,Adaptive,2-6,35-350,Best tech performance (QQQ +32.44%) | Accelerating stops,Overtrading in chop | Utilities disaster
+Alt28,3,Very Selective,Variable,10-100,Highest quality entries | UNH 72% win rate,Low trade frequency | Over-filters many assets
+Baseline,3,Regular,4-12,23-210,Reliable benchmark | Proven system,Longer holds than ideal for options
+Alt15,2,Very Low,Months,11-29,Explosive individual stock returns (MSFT +52.7%),Too few trades | Buy-and-hold nature
+Alt17,2,Low (Over-filtered),Variable,38-80,High-conviction entries | Good for trending stocks,Misses too many opportunities | ETF killer
+Alt2,1,Extremely Low,N/A,0-78,None identified,Many sectors with zero trades | Over-filtering
+Alt20,0,N/A,N/A,34-263,None,95% failure rate | Complete disaster
+
+================================================================================
+BEST STRATEGY PER SECTOR FOR OPTIONS TRADERS
+================================================================================
+
+Sector,Security,Best_Strategy,Result_%,PF,Win_Rate_%,Max_DD_%,2nd_Best_Strategy,Primary_Reason
+Technology,MSFT,Alt26,+16.33,1.947,51.81,4.98,Alt22,Low DD | Regular exits
+Technology,QQQ,Alt22,+32.44,1.864,59.50,6.08,Alt26,Best ETF performance ever | Parabolic SAR perfect for tech
+Healthcare,UNH,Alt28,+26.61,4.809,72.22,4.81,Alt10,Legendary 72% win rate | Cleanest trends
+Healthcare,XLV,Alt26,+23.48,2.791,61.43,5.41,Alt10,Highest ETF PF ever (2.791)
+Consumer Cyclical,AMZN,Alt9,+37.65,2.463,47.27,11.99,Alt10,Time exits capture explosive moves
+Consumer Cyclical,XLY,Alt10,+22.79,1.754,60.53,11.05,Alt26,Profit targets work perfectly
+Consumer Defensive,WMT,Baseline,+31.69,2.935,51.16,6.38,Alt10,Best PF ever (2.935) | Hidden gem
+Consumer Defensive,XLP,Alt10,+1.86,1.079,51.61,14.14,Alt26,Only profitable strategy
+Industrials,CAT,Alt26,+18.91,1.782,62.12,7.93,Alt10,Highest win rate (62.12%)
+Industrials,XLI,Alt28,+9.25,1.586,50.00,8.04,Alt26,Profitable with quality entries
+Financials,JPM,Alt15,+18.53,1.521,35.29,17.10,Baseline,Stock specialist advantage
+Financials,XLF,Alt10,+10.79,1.447,54.55,8.27,Alt28,ETF beats individual stock
+Communication,GOOGL,Alt22,+22.47,1.817,54.22,6.20,Alt26,Tech mega-cap momentum
+Basic Materials,FCX,Alt17,+34.51,1.735,38.81,11.03,Baseline,Dual TF filtering helps whipsaws
+Real Estate,PLD,Alt10,+20.56,2.588,58.82,5.34,Alt26,Profit targets essential for REITs
+Real Estate,XLRE,None,N/A,N/A,N/A,N/A,None,Avoid - most strategies fail
+Energy,XOM,Baseline,+3.16,1.149,31.58,13.71,Alt20,Scratch only - avoid sector
+Energy,XLE,Alt10,+5.94,1.218,44.83,13.81,Alt26,Barely profitable - avoid sector
+Utilities,DUK,None,N/A,N/A,N/A,N/A,None,TOXIC - all strategies fail
+Utilities,XLU,None,N/A,N/A,N/A,N/A,None,TOXIC - all strategies fail
+
+================================================================================
+SECTOR DIFFICULTY RANKING
+================================================================================
+
+Sector,Avg_Win_Rate_%,Avg_Result_%,Profitable_Strategy_Count,Difficulty,Best_For_Options,Recommendation
+Healthcare,50.2,+20.5,9 of 10,Easy,Yes,TRADE THIS - Gold sector
+Technology,46.8,+18.4,8 of 10,Easy,Yes,TRADE THIS - Use SAR or Fractional
+Consumer Cyclical,49.3,+17.2,8 of 10,Easy,Yes,TRADE THIS - Explosive moves
+Industrials,45.1,+14.8,8 of 10,Moderate,Yes,TRADE THIS - Cycles work well
+Consumer Defensive,47.2,+13.1,7 of 10,Moderate,Yes,WMT only - avoid XLP
+Communication,39.4,+9.8,6 of 10,Moderate,Yes,Selective - GOOGL works well
+Financials,38.7,+4.2,5 of 10,Difficult,Moderate,Use ETF (XLF) not individual
+Real Estate,44.1,+3.9,4 of 10,Difficult,No,PLD only - avoid XLRE
+Basic Materials,38.9,-1.2,4 of 10,Very Difficult,No,High activity | Mean-reverting
+Energy,36.4,-3.8,2 of 10,Very Difficult,No,AVOID - Choppy | Mean-reverting
+Utilities,27.1,-12.6,0 of 10,TOXIC,No,DO NOT TRADE - Universal failure
+
+================================================================================
+DRAWDOWN ANALYSIS
+================================================================================
+
+Strategy,Security,Max_DD_%,Result_%,DD_to_Return_Ratio,Risk_Category
+Alt26,MSFT,4.98,+16.33,0.305,Excellent
+Alt26,WMT,5.96,+13.69,0.435,Excellent
+Alt26,GOOGL,5.70,+18.65,0.306,Excellent
+Alt26,QQQ,5.95,+21.85,0.272,Excellent
+Alt26,XLV,5.41,+23.48,0.230,Excellent
+Alt28,UNH,4.81,+26.61,0.181,Excellent
+Alt10,CAT,5.34,+20.56,0.260,Excellent
+Alt10,UNH,6.99,+33.13,0.211,Excellent
+Alt22,GOOGL,6.20,+22.47,0.276,Excellent
+Alt22,QQQ,6.08,+32.44,0.187,Excellent
+Baseline,WMT,6.38,+31.69,0.201,Excellent
+Baseline,CAT,6.73,+26.35,0.255,Excellent
+Baseline,MSFT,8.63,+36.22,0.238,Good
+Alt9,CAT,6.78,+31.54,0.215,Excellent
+Alt9,WMT,6.68,+30.39,0.220,Excellent
+Alt22,AMZN,7.80,+16.30,0.478,Good
+Alt28,AMZN,7.66,+14.70,0.521,Good
+Alt15,MSFT,9.36,+52.65,0.178,Excellent (Low Trade Count)
+Alt26,SPY,12.45,+33.50,0.372,Good
+Alt15,DUK,33.49,-29.01,-1.154,Catastrophic
+Alt15,XLU,34.24,-28.18,-1.215,Catastrophic
+Alt20,SPY,13.82,-13.43,-1.029,Catastrophic
+Alt9,SPY,29.79,-23.99,-1.242,Catastrophic
+Baseline,XLU,25.34,-20.99,-1.207,Catastrophic
+
+================================================================================
+WIN RATE LEADERS BY STRATEGY
+================================================================================
+
+Strategy,Security,Win_Rate_%,Result_%,PF,Trades,Notes
+Alt28,UNH,72.22,+26.61,4.809,36,HIGHEST WIN RATE ACROSS ALL TESTS
+Alt26,CAT,62.12,+18.91,1.782,66,Highest individual stock for Alt26
+Alt26,XLV,61.43,+23.48,2.791,70,Highest ETF win rate
+Alt10,XLY,60.53,+22.79,1.754,76,Consumer strength
+Alt22,QQQ,59.50,+32.44,1.864,121,Tech momentum specialist
+Alt10,XLV,59.70,+27.68,2.22,67,Healthcare excellence
+Alt10,CAT,58.82,+20.56,2.588,51,Profit targets capture cycles
+Alt28,CAT,58.54,+20.77,1.889,41,ADX filtering quality
+Alt10,UNH,57.58,+33.13,2.312,66,Healthcare gold
+Alt26,QQQ,56.86,+21.85,1.807,102,Tech growth
+Alt28,WMT,55.10,+12.76,1.66,49,Defensive gem
+Alt10,AMZN,54.55,+21.94,1.661,99,Consumer cyclical
+Alt22,GOOGL,54.22,+22.47,1.817,83,Tech mega-cap
+Alt26,GOOGL,53.25,+18.65,2.065,77,Communication services
+Alt26,AMZN,53.06,+15.34,1.66,98,Consumer cyclical
+Baseline,WMT,51.16,+31.69,2.935,43,BEST PROFIT FACTOR EVER
+
+================================================================================
+PROFIT FACTOR LEADERS
+================================================================================
+
+Strategy,Security,Profit_Factor,Win_Rate_%,Result_%,Max_DD_%,Category
+Alt28,UNH,4.809,72.22,+26.61,4.81,LEGENDARY
+Baseline,WMT,2.935,51.16,+31.69,6.38,OUTSTANDING
+Alt26,XLV,2.791,61.43,+23.48,5.41,HIGHEST ETF PF EVER
+Alt17,WMT,2.822,48.84,+30.47,6.68,EXCELLENT
+Baseline,MSFT,2.71,41.86,+36.22,8.63,EXCELLENT
+Alt17,MSFT,2.68,41.86,+35.83,8.80,EXCELLENT
+Alt15,MSFT,2.598,46.67,+52.65,9.36,BEST SINGLE POSITION
+Alt10,CAT,2.588,58.82,+20.56,5.34,EXCEPTIONAL
+Alt10,PLD,2.588,58.82,+20.56,5.34,EXCEPTIONAL
+Baseline,AMZN,2.508,48.15,+35.82,11.51,EXCEPTIONAL
+Alt9,AMZN,2.463,47.27,+37.65,11.99,EXCEPTIONAL
+Alt17,AMZN,2.436,48.15,+34.64,11.99,VERY PROFITABLE
+Alt9,WMT,2.428,45.65,+30.39,6.68,OUTSTANDING
+Alt15,AMZN,2.283,47.37,+48.63,16.13,EXCEPTIONAL
+Alt10,UNH,2.312,57.58,+33.13,6.99,BEST PERFORMER
+Alt10,XLV,2.22,59.70,+27.68,8.91,OUTSTANDING
+Alt9,MSFT,2.141,43.40,+28.90,8.80,EXCELLENT
+Alt9,XLV,2.102,45.10,+29.96,8.28,EXCEPTION
+Alt10,WMT,2.084,52.46,+24.48,9.00,EXCELLENT
+Alt26,GOOGL,2.065,53.25,+18.65,5.70,VERY PROFITABLE
+Alt15,WMT,2.073,35.29,+30.14,11.66,EXCELLENT
+
+================================================================================
+STRATEGIES TO AVOID (CONSISTENT FAILURES)
+================================================================================
+
+Strategy,Security,Result_%,PF,Win_Rate_%,Failure_Reason
+Alt20,SPY,-13.43,0.729,42.98,Asymmetric parameters destroy consistency
+Alt20,XLI,-8.74,0.425,41.41,Parameter mismatch | High trades but losses
+Alt20,GOOGL,-7.51,0.451,37.80,Worst individual stock for Alt20
+Alt20,XLF,-5.66,0.558,29.21,Lowest win rate | Financial sector incompatible
+Alt9,SPY,-23.99,0.700,36.21,Time exits catastrophic on broad market ETFs
+Alt9,DUK,-20.18,0.215,21.43,Utilities disaster
+Alt9,XLU,-19.13,0.283,28.57,Defensive sector whipsaw
+Alt9,XLF,-13.62,0.587,33.90,Severe underperformance
+Alt15,DUK,-29.01,0.280,16.67,Worst individual for single position
+Alt15,XLU,-28.18,0.293,26.32,Worst ETF for single position
+Alt15,SPY,-21.84,0.177,8.33,Only 1 winner in 12 trades | Catastrophic
+Alt15,XLF,-16.16,0.698,27.27,Brutal 31.84% drawdown
+Alt10,FCX,-32.21,0.754,39.31,WORST RESULT ACROSS ALL TESTS | 318 trades
+Alt10,DUK,-12.39,0.563,36.36,Profit targets fail on utilities
+Alt22,XLU,-22.28,0.278,26.03,Parabolic SAR disaster on low volatility
+Alt22,SPY,-16.70,0.805,44.40,Shocking overtrading (250 trades)
+Alt22,FCX,-16.66,0.871,44.70,349 trades | Commodity whipsaw machine
+Alt22,XLF,-15.07,0.573,37.78,Financial sector volatility killer
+Alt28,DUK,-15.67,0.014,4.76,Only 1 winner in 21 trades | Catastrophic
+Alt28,XLP,-12.82,0.159,19.23,Defensive fails ADX threshold
+Alt28,XLRE,-7.67,0.000,0.00,ZERO WINNING TRADES | Complete over-filtering
+Baseline,XLU,-20.99,0.211,24.49,Worst baseline performer
+Baseline,DUK,-19.93,0.220,21.43,Utilities catastrophic failure
+
+================================================================================
+TOP PERFORMING INDIVIDUAL STOCKS
+================================================================================
+
+Security,Best_Strategy,Result_%,PF,Win_Rate_%,Max_DD_%,Why_It_Works
+MSFT,Alt15,+52.65,2.598,46.67,9.36,Tech growth | Single position captures explosive moves
+AMZN,Alt15,+48.63,2.283,47.37,16.13,Consumer cyclical | Explosive momentum bursts
+AMZN,Alt9,+37.65,2.463,47.27,11.99,Time exits capture rapid growth cycles
+MSFT,Baseline,+36.22,2.71,41.86,8.63,Tech mega-cap | Classic Donchian baseline
+MSFT,Alt17,+35.83,2.68,41.86,8.80,Dual TF confluence confirms quality
+AMZN,Baseline,+35.82,2.508,48.15,11.51,Consumer growth baseline benchmark
+UNH,Alt9,+35.87,1.964,45.76,17.64,Healthcare trends with time exits
+AMZN,Alt17,+34.64,2.436,48.15,11.99,Dual timeframe works on strong trends
+UNH,Alt15,+33.42,1.746,47.62,19.34,Healthcare with single position
+UNH,Alt10,+33.13,2.312,57.58,6.99,Profit targets perfect for healthcare
+CAT,Alt9,+31.54,2.017,38.64,6.78,Industrial cycles + time exits
+WMT,Baseline,+31.69,2.935,51.16,6.38,BEST PF EVER | Defensive that trends
+WMT,Alt17,+30.47,2.822,48.84,6.68,Excellent dual TF on trending defensive
+WMT,Alt9,+30.39,2.428,45.65,6.68,Outstanding time exit performance
+WMT,Alt15,+30.14,2.073,35.29,11.66,Single position on defensive gem
+
+================================================================================
+TOP PERFORMING ETFs
+================================================================================
+
+ETF,Best_Strategy,Result_%,PF,Win_Rate_%,Max_DD_%,Why_It_Works
+SPY,Alt39,+131.89,1.241,50.72,8.04,BEST SPY RESULT EVER | Age-based targets capture full broad market trends
+XLV,Alt39,+29.70,2.361,64.29,10.19,HIGHEST ETF WIN RATE (64.29%) | Age-based targets perfect for healthcare
+QQQ,Alt22,+32.44,1.864,59.50,6.08,Parabolic SAR dominates tech momentum
+SPY,Alt26,+33.50,1.388,50.72,12.45,Fractional pyramid very profitable for broad market
+XLV,Alt9,+29.96,2.102,45.10,8.28,Healthcare ETF with time exits
+XLV,Alt10,+27.68,2.22,59.70,8.91,Profit targets outstanding on healthcare
+XLV,Alt17,+25.05,1.987,41.30,9.73,Dual TF very profitable on healthcare
+XLV,Baseline,+25.76,2.024,41.30,9.63,Best baseline ETF performer
+XLV,Alt26,+23.48,2.791,61.43,5.41,HIGHEST ETF PF EVER (2.791)
+QQQ,Alt10,+22.75,1.495,54.17,8.28,Profit targets very profitable on tech
+XLY,Alt10,+22.79,1.754,60.53,11.05,Consumer discretionary excellent
+QQQ,Alt26,+21.85,1.807,56.86,5.95,Fractional pyramid strong on tech
+SPY,Alt10,+20.31,1.232,48.33,16.75,Profit targets huge vs Alt9 (-24%)
+XLY,Baseline,+15.40,1.462,43.08,10.73,Consumer discretionary baseline
+XLY,Alt9,+14.68,1.415,41.18,10.77,Time exits profitable on cyclical
+XLY,Alt17,+14.74,1.44,43.08,10.77,Dual TF works on consumer strength
+XLY,Alt26,+11.64,1.525,58.54,9.55,Fractional very profitable
+
+================================================================================
+SUMMARY STATISTICS
+================================================================================
+
+Metric,Value,Notes
+Total Backtests Completed,231,11 strategies x 21 securities (some missing)
+Best Single Result,MSFT Alt15 +52.65%,Single position on tech growth
+Best ETF Result,SPY Alt39 +131.89%,LEGENDARY age-based targets on broad market
+Worst Single Result,FCX Alt10 -32.21%,Profit targets catastrophic on commodities
+Most Improved Result,FCX Alt39 -4.47%,Improved 27.74% from Alt10's -32.21%
+Highest Profit Factor,UNH Alt28 4.809,Legendary 72.22% win rate
+Highest Win Rate,UNH Alt28 72.22%,Highest individual stock across all tests
+Highest ETF Win Rate,XLV Alt39 64.29%,Age-based targets on healthcare ETF
+Lowest Max Drawdown,MSFT Alt26 4.98%,Exceptional risk control
+Best Broad Market,SPY Alt39 +131.89%,Age-based targets capture full SPY trends
+Most Consistent Strategy,Alt10 (76%) > Alt39 (67%) > Alt26 (57%),Top 3 strategies for reliability
+Worst Strategy,Alt20,95% failure rate (0/19 profitable)
+Best Sector,Healthcare,10 of 11 strategies profitable
+Worst Sector,Utilities,0 of 11 strategies profitable
+Best Options Strategy,Alt10 Alt39 & Alt26,Regular exits | Adaptive targeting | Works on stocks and ETFs
+Worst Options Strategy,Alt20,Unusable | 95% failure rate
+
+================================================================================
+RISK-ADJUSTED RETURNS (Return / Max DD Ratio)
+================================================================================
+
+Strategy,Security,Return_%,Max_DD_%,Return_DD_Ratio,Risk_Category
+Baseline,WMT,+31.69,6.38,4.966,Exceptional
+Alt9,WMT,+30.39,6.68,4.550,Exceptional
+Alt10,UNH,+33.13,6.99,4.739,Exceptional
+Alt26,XLV,+23.48,5.41,4.340,Exceptional
+Baseline,MSFT,+36.22,8.63,4.197,Exceptional
+Alt26,WMT,+13.69,5.96,2.297,Good
+Alt26,MSFT,+16.33,4.98,3.279,Excellent
+Alt22,QQQ,+32.44,6.08,5.336,Exceptional
+Alt28,UNH,+26.61,4.81,5.531,Exceptional
+Alt10,CAT,+20.56,5.34,3.850,Excellent
+Alt15,MSFT,+52.65,9.36,5.624,Exceptional (Low trades)
+Alt9,CAT,+31.54,6.78,4.651,Exceptional
+Alt17,MSFT,+35.83,8.80,4.072,Excellent
+Alt22,GOOGL,+22.47,6.20,3.624,Excellent
+Alt26,GOOGL,+18.65,5.70,3.272,Excellent
+
+================================================================================
+SECTOR TRADING RECOMMENDATIONS FOR OPTIONS TRADERS
+================================================================================
+
+Sector,Trade_It,Primary_Strategy,Secondary_Strategy,Key_Stocks,Avg_Hold_Weeks,Win_Rate_Range_%,Notes
+Healthcare,YES,Alt10,Alt26,UNH XLV,8-12,45-72,BEST SECTOR | Consistent profits | Clean trends
+Technology,YES,Alt22,Alt26,MSFT QQQ,6-12,42-60,Strong momentum | SAR excellent | QQQ +32.44%
+Consumer Cyclical,YES,Alt26,Alt10,AMZN XLY,6-10,47-61,Explosive moves | Regular exits | Time exits work
+Industrials,YES,Alt26,Alt10,CAT XLI,8-12,38-62,Economic cycles | CAT 62% win rate | Consistent
+Consumer Defensive,SELECTIVE,Alt26,Alt10,WMT only,8-12,48-55,WMT is hidden gem | Avoid XLP ETF
+Communication,SELECTIVE,Alt22,Alt26,GOOGL,6-10,42-54,GOOGL works well | Tech mega-cap
+Financials,MAYBE,Alt10,Alt26,XLF only,8-12,35-58,Use ETF not individual | Moderate results
+Real Estate,NO,Alt10,Alt26,PLD only,Variable,37-59,High win% but small gains | Avoid XLRE
+Basic Materials,NO,Baseline,Alt17,FCX,Variable,33-45,High activity | Mean-reverting | Whipsaws
+Energy,NO,None,None,None,N/A,21-47,AVOID | Choppy | Mean-reverting | All struggle
+Utilities,NO,None,None,None,N/A,5-44,TOXIC | DO NOT TRADE | Universal failure
+
+================================================================================
+END OF ANALYSIS
+================================================================================

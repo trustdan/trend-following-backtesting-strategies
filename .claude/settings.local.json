@@ -17,7 +17,21 @@
       "Bash(findstr:*)",
       "Bash(powershell:*)",
       "Bash(git add:*)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nAdd comprehensive strategy testing results and documentation\n\n- Added DISCOVERIES_AND_LEARNINGS.md with detailed findings for 8 tested strategies\n- Completed testing: Alt2, Alt9, Alt10, Alt15, Alt17, Alt20, Alt22, Alt26\n- Alt26 (Fractional Pyramid) shows exceptional results: SPY +33.5%, XLV PF 2.791\n- Alt10 (Profit Targets) and Alt26 emerge as top performers with 76% success rate\n- Archived old iteration files and reorganized project structure\n- Added sector-by-sector testing results across 11 individual stocks and 10 ETFs\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git commit -m \"$(cat <<''EOF''\nAdd comprehensive strategy testing results and documentation\n\n- Added DISCOVERIES_AND_LEARNINGS.md with detailed findings for 8 tested strategies\n- Completed testing: Alt2, Alt9, Alt10, Alt15, Alt17, Alt20, Alt22, Alt26\n- Alt26 (Fractional Pyramid) shows exceptional results: SPY +33.5%, XLV PF 2.791\n- Alt10 (Profit Targets) and Alt26 emerge as top performers with 76% success rate\n- Archived old iteration files and reorganized project structure\n- Added sector-by-sector testing results across 11 individual stocks and 10 ETFs\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(for sector in sectors/*/)",
+      "Bash(do cp pine-scripts/13_PF-1.241_seykota_alt39_adaptive_targets.pine \"$sector\")",
+      "Bash(do if [ -f \"$sectorstrategies/seykota_alt41_sector_adaptive_hybrid.pine\" ])",
+      "Bash(then echo \"$sector\")",
+      "Bash(fi)",
+      "Bash(for dir in */)",
+      "Bash(do file=\"$dirstrategies/seykota_alt41_sector_adaptive_hybrid.pine\")",
+      "Bash(if [ -f \"$file\" ])",
+      "Bash(then sed -i 's/var bool entryWasTrending = na  \\/\\/ Remember which path we took on entry/var entryWasTrending = na  \\/\\/ Remember which path we took on entry (bool or na)/' \"$file\")",
+      "Bash(then sed -i 's/var entryWasTrending = na  \\/\\/ Remember which path we took on entry (bool or na)/var bool entryWasTrending = false  \\/\\/ Remember which path we took on entry/' \"$file\")",
+      "Bash(do cp pine-scripts/seykota_alt41_sector_adaptive_hybrid.pine \"$sector\")",
+      "Bash(do file=\"$dirstrategies/seykota_alt42_momentum_gated_time.pine\")",
+      "Bash(then sed -i '159,163s/.*/\\/\\/================ THREE-TIERED EXIT LOGIC (KEY INNOVATION)\\n\\n\\/\\/ Calculate momentum crosses globally (must run on every bar for consistency)\\nrsiCrossUnder = ta.crossunder(rsiValue, rsiMomentumFade)\\nrsiCrossOver = ta.crossover(rsiValue, rsiMomentumFade)\\n\\n\\/\\/ 1. EARLY EXIT: Momentum fades (RSI crosses 50)\\nmomentumFadedLong = isLong and rsiCrossUnder\\nmomentumFadedShort = isShort and rsiCrossOver/' \"$file\")",
+      "Bash(then sed -i '/^\\/\\/ Background color showing exit zones$/,/^        color\\.new(color\\.blue, 95), title=/c\\// Background color showing exit zones\\nexitZoneColor = barsInPosition >= maxExitBars ? color.new(color.red, 85) : barsInPosition >= standardExitBars ? color.new(color.orange, 90) : color.new(color.blue, 95)\\nbgcolor(exitZoneColor, title=\"\"Exit Zone: Red=Force Exit, Orange=Standard, Blue=Early\"\")' \"$file\")"
     ],
     "deny": [],
     "ask": []

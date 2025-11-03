@@ -1,0 +1,129 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © danieltuckerrust
+// ALTERNATIVE 39: Adaptive Profit Targets (Age-Based)
+// THEORY: New innovation - profit targets adapt to position age
+// - Young positions (0-15 bars): Wide targets (4N, 7N, 10N) - let them run
+// - Mature positions (16-30 bars): Standard targets (3N, 6N, 9N)
+// - Aging positions (31+ bars): Tight targets (2N, 4N, 6N) - book profits faster
+// INSIGHT: Time decay = opportunity cost. Older positions should exit faster to free capital.
+// Trade-off: New concept untested, but theoretically sound - aging trends weaken
+//
+// BACKTEST RESULTS (SPY 2009-2015): +131.69% | Profit Factor: 1.241 | Win Rate: 50.72% | Max DD: 8.04%
+// NOTE: Different timeframe than other strategies - needs 2022-2025 backtest for comparison
+
+//@version=6
+strategy("Seykota Alt 39: Adaptive Targets v1.0",
+     overlay=true,
+     initial_capital=100000,
+     commission_type=strategy.commission.percent, commission_value=0.005,
+     slippage=2,
+     default_qty_type=strategy.fixed, default_qty_value=0,
+     pyramiding=10,
+     max_bars_back=5000)
+
+allowLong = input.bool(true, "Allow LONGs?"), allowShort = input.bool(true, "Allow SHORTs?")
+entryLen = input.int(55, "Donchian ENTRY", minval=10), nLen = input.int(20, "N = ATR length", minval=5)
+stopN = input.float(2.0, "Initial stop (N)", minval=0.5, step=0.25)
+trailLen = input.int(22, "Trail lookback", minval=5), trailN = input.float(3.0, "Trail (N)", minval=0.5, step=0.25)
+addStepN = input.float(0.5, "Add every X*N", minval=0.25, step=0.25), maxUnits = input.int(4, "Max units", minval=1, maxval=10)
+riskPct = input.float(1.0, "Risk % per unit", minval=0.1, maxval=5, step=0.1)
+useTargets = input.bool(true, "Use adaptive targets?")
+youngAge = input.int(15, "Young pos threshold (bars)", minval=5), matureAge = input.int(30, "Mature pos threshold (bars)", minval=10)
+youngT1 = input.float(4.0, "Young T1 (N)", minval=1, step=0.5), youngT2 = input.float(7.0, "Young T2 (N)", minval=1, step=0.5), youngT3 = input.float(10.0, "Young T3 (N)", minval=1, step=0.5)
+standardT1 = input.float(3.0, "Standard T1 (N)", minval=1, step=0.5), standardT2 = input.float(6.0, "Standard T2 (N)", minval=1, step=0.5), standardT3 = input.float(9.0, "Standard T3 (N)", minval=1, step=0.5)
+agingT1 = input.float(2.0, "Aging T1 (N)", minval=1, step=0.5), agingT2 = input.float(4.0, "Aging T2 (N)", minval=1, step=0.5), agingT3 = input.float(6.0, "Aging T3 (N)", minval=1, step=0.5)
+useMarket = input.bool(false, "Use regime filter?"), marketSym = input.symbol("SPY", "Market symbol")
+marketTF = input.timeframe("D", "Regime TF"), marketLen = input.int(200, "Market MA", minval=50)
+minVol = input.int(0, "Min volume", minval=0), showSignals = input.bool(true, "Plot signals?"), plotDon = input.bool(true, "Plot Donchian?")
+fromDate = input.time(defval=timestamp("2022-01-01T00:00:00"), title="FROM", confirm=true)
+toDate = input.time(defval=timestamp("2099-12-31T23:59:59"), title="TO", confirm=true)
+flatAtFrom = input.bool(true, "FLAT at range start?")
+isRangeStart = (time[1] < fromDate) and (time >= fromDate)
+if flatAtFrom and isRangeStart and strategy.position_size != 0
+    strategy.close_all(comment="Flat at FROM")
+
+sharesForUnit(_e, _n) =>
+    r = _e * (riskPct/100.0)
+    psr = math.max(stopN * _n, syminfo.mintick)
+    math.max(1, math.floor(r / psr))
+
+inRange = (time >= fromDate) and (time <= toDate)
+N = ta.atr(nLen), volMA = ta.sma(volume, 20), liqOK = volMA >= minVol
+donHi = ta.highest(high, entryLen), donLo = ta.lowest(low, entryLen)
+donHiPrev = donHi[1], donLoPrev = donLo[1]
+trailHighest = ta.highest(high, trailLen), trailLowest = ta.lowest(low, trailLen)
+mClose = request.security(marketSym, marketTF, close), mMA = request.security(marketSym, marketTF, ta.sma(close, marketLen))
+longRegOK = not useMarket or (mClose > mMA), shortRegOK = not useMarket or (mClose < mMA)
+longBreak = allowLong and liqOK and longRegOK and (close > donHiPrev)
+shortBreak = allowShort and liqOK and shortRegOK and (close < donLoPrev)
+
+var float N_entry = na, var float entryPrice = na, var float lastAddLong = na, var float lastAddShort = na
+var int units = 0, var int barsInPos = 0, var bool t1 = false, var bool t2 = false, var bool t3 = false
+inPos = strategy.position_size != 0, inLong = strategy.position_size > 0, inShort = strategy.position_size < 0
+if inPos
+    barsInPos += 1
+else
+    barsInPos := 0, units := 0, lastAddLong := na, lastAddShort := na, N_entry := na, entryPrice := na, t1 := false, t2 := false, t3 := false
+
+if inRange and not inPos and longBreak
+    N_entry := N, entryPrice := close, strategy.entry("L", strategy.long, qty=sharesForUnit(strategy.equity, N_entry))
+    units := 1, lastAddLong := close
+if inRange and not inPos and shortBreak
+    N_entry := N, entryPrice := close, strategy.entry("S", strategy.short, qty=sharesForUnit(strategy.equity, N_entry))
+    units := 1, lastAddShort := close
+
+if inRange and inLong and units < maxUnits and high >= nz(lastAddLong) + addStepN * N_entry
+    strategy.entry("L", strategy.long, qty=sharesForUnit(strategy.equity, N_entry)), units += 1, lastAddLong := close
+if inRange and inShort and units < maxUnits and low <= nz(lastAddShort) - addStepN * N_entry
+    strategy.entry("S", strategy.short, qty=sharesForUnit(strategy.equity, N_entry)), units += 1, lastAddShort := close
+
+var float activeT1 = na, var float activeT2 = na, var float activeT3 = na
+if useTargets and inLong and not na(entryPrice) and not na(N_entry)
+    if barsInPos <= youngAge
+        activeT1 := youngT1, activeT2 := youngT2, activeT3 := youngT3
+    else if barsInPos <= matureAge
+        activeT1 := standardT1, activeT2 := standardT2, activeT3 := standardT3
+    else
+        activeT1 := agingT1, activeT2 := agingT2, activeT3 := agingT3
+
+    if not t1 and high >= entryPrice + activeT1 * N_entry
+        strategy.close("L", qty=sharesForUnit(strategy.equity, N_entry), comment="T1"), t1 := true
+    if t1 and not t2 and high >= entryPrice + activeT2 * N_entry
+        strategy.close("L", qty=sharesForUnit(strategy.equity, N_entry), comment="T2"), t2 := true
+    if t2 and not t3 and high >= entryPrice + activeT3 * N_entry
+        strategy.close("L", qty=sharesForUnit(strategy.equity, N_entry), comment="T3"), t3 := true
+
+if useTargets and inShort and not na(entryPrice) and not na(N_entry)
+    if barsInPos <= youngAge
+        activeT1 := youngT1, activeT2 := youngT2, activeT3 := youngT3
+    else if barsInPos <= matureAge
+        activeT1 := standardT1, activeT2 := standardT2, activeT3 := standardT3
+    else
+        activeT1 := agingT1, activeT2 := agingT2, activeT3 := agingT3
+
+    if not t1 and low <= entryPrice - activeT1 * N_entry
+        strategy.close("S", qty=sharesForUnit(strategy.equity, N_entry), comment="T1"), t1 := true
+    if t1 and not t2 and low <= entryPrice - activeT2 * N_entry
+        strategy.close("S", qty=sharesForUnit(strategy.equity, N_entry), comment="T2"), t2 := true
+    if t2 and not t3 and low <= entryPrice - activeT3 * N_entry
+        strategy.close("S", qty=sharesForUnit(strategy.equity, N_entry), comment="T3"), t3 := true
+
+var float stopL = na, var float stopS = na
+if inRange and inLong
+    stopL := math.round_to_mintick(math.max(entryPrice - stopN * N_entry, trailHighest - trailN * N_entry))
+    strategy.exit("L-EXIT", from_entry="L", stop=stopL)
+else
+    stopL := na
+if inRange and inShort
+    stopS := math.round_to_mintick(math.min(entryPrice + stopN * N_entry, trailLowest + trailN * N_entry))
+    strategy.exit("S-EXIT", from_entry="S", stop=stopS)
+else
+    stopS := na
+
+plot(plotDon ? donHi : na, "DonHi", color=color.new(color.blue, 40))
+plot(plotDon ? donLo : na, "DonLo", color=color.new(color.blue, 40))
+plotshape(showSignals and longBreak, title="L", style=shape.triangleup, location=location.belowbar, size=size.tiny, color=color.new(color.green, 0))
+plotshape(showSignals and shortBreak, title="S", style=shape.triangledown, location=location.abovebar, size=size.tiny, color=color.new(color.red, 0))
+ageColor = barsInPos <= youngAge ? color.green : (barsInPos <= matureAge ? color.orange : color.red)
+plot(showSignals and inLong ? stopL : na, "Stop", color=color.new(ageColor, 0), style=plot.style_linebr, linewidth=2)
+plot(showSignals and inShort ? stopS : na, "Stop", color=color.new(ageColor, 0), style=plot.style_linebr, linewidth=2)

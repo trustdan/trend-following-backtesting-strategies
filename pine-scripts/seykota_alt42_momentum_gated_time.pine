@@ -1,0 +1,242 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © danieltuckerrust
+// ALTERNATIVE 42: Momentum-Gated Time Exit Strategy
+// THEORY: Alt9's rigid 40-bar time exit works brilliantly on individual stocks (AMZN +37.7%,
+// WMT +30.4%, UNH +35.9%) but CATASTROPHICALLY fails on slow-grinding ETFs (SPY -24.0%!).
+// The problem: Some trends need MORE than 40 bars (ETFs), others should exit SOONER (momentum fades).
+//
+// INNOVATION: Three-tiered exit system that adapts to momentum:
+// 1. EARLY EXIT: If momentum fades (RSI crosses 50) → exit immediately (could be bar 5, 10, 20...)
+// 2. STANDARD EXIT: At 40 bars (Alt9 baseline) → exit unless momentum is exceptionally strong
+// 3. EXTENDED EXIT: Up to 60 bars IF at bar 40, momentum is very strong (RSI >65 longs, <35 shorts)
+//
+// INSIGHT FROM 210 BACKTESTS: Alt9's time discipline is CORRECT (prevents overstaying), but needs
+// flexibility for different asset behaviors. Individual stocks explode quickly (need 40-bar limit),
+// ETFs grind slowly (need extended time if momentum intact), choppy assets reverse fast (need early exit).
+//
+// WHY THIS SOLVES KEY PROBLEMS:
+// - SPY/QQQ ETFs: Can hold beyond 40 bars if momentum strong → avoid premature exits on slow grinders
+// - Individual stocks (AMZN, MSFT): Still exit at 40 bars → maintain discipline on explosive moves
+// - Choppy assets: Exit immediately when RSI crosses 50 → avoid holding through reversals
+// - Aging positions: Force exit at 60 bars maximum → prevent capital tie-up
+//
+// Trade-off: More complex than Alt9's simple 40-bar rule, but theoretically superior - adapts to momentum.
+// For options traders: Exits range 5-60 bars (1-12 weeks), still suitable for options expiration cycles.
+
+//@version=6
+strategy("Seykota Alt 42: Momentum-Gated Time v1.0",
+     overlay=true,
+     initial_capital=100000,
+     commission_type=strategy.commission.percent, commission_value=0.005,
+     slippage=2,
+     default_qty_type=strategy.fixed, default_qty_value=0,
+     pyramiding=10,
+     max_bars_back=5000)
+
+//================ Inputs
+allowLong   = input.bool(true,  "Allow LONGs?")
+allowShort  = input.bool(true,  "Allow SHORTs?")
+
+// Entry
+entryLen    = input.int(55,     "Donchian ENTRY lookback",            minval=10)
+nLen        = input.int(20,     "N = ATR length",                     minval=5)
+stopN       = input.float(2.0,  "Initial stop (in N)",                minval=0.5, step=0.25)
+
+// Pyramiding
+addStepN    = input.float(0.5,  "Add every X * N",                    minval=0.25, step=0.25)
+maxUnits    = input.int(4,      "Max units (incl. initial)",          minval=1, maxval=10)
+riskPct     = input.float(1.0,  "Risk % of equity PER UNIT",          minval=0.1, maxval=5, step=0.1)
+
+// TIME EXIT PARAMETERS (KEY INNOVATION)
+standardExitBars = input.int(40,  "Standard time exit (bars)",        minval=20, maxval=100)
+maxExitBars      = input.int(60,  "Maximum hold time (bars)",         minval=40, maxval=120)
+rsiLen           = input.int(14,  "RSI length for momentum",          minval=5)
+rsiMomentumFade  = input.float(50.0, "RSI fade threshold (early exit)", minval=40, maxval=60, step=1)
+rsiStrongMomentum = input.float(65.0, "RSI strong threshold (extend hold)", minval=60, maxval=80, step=1)
+
+// Optional market filter
+useMarket   = input.bool(false, "Use market regime filter?")
+marketSym   = input.symbol("SPY", "Market symbol for regime")
+marketTF    = input.timeframe("D", "Regime timeframe")
+marketLen   = input.int(200,    "Market MA length",                   minval=50)
+
+minVol      = input.int(0,      "Min 20-bar avg volume",              minval=0)
+showSignals = input.bool(true,  "Plot signals & stops?")
+plotDon     = input.bool(true,  "Plot Donchian bands?")
+
+// Backtest range
+fromDate = input.time(defval=timestamp("2010-01-01T00:00:00"), title="Backtest FROM")
+toDate   = input.time(defval=timestamp("2099-12-31T23:59:59"), title="Backtest TO")
+flatAtFrom = input.bool(true, "Force FLAT at range start?")
+
+// Force flat at range start
+isRangeStart = (time[1] < fromDate) and (time >= fromDate)
+if flatAtFrom and isRangeStart and strategy.position_size != 0
+    strategy.close_all(comment="Flat at FROM")
+
+//================ Core Calculations
+inRange = (time >= fromDate) and (time <= toDate)
+N = ta.atr(nLen)
+
+// Donchian channels
+donUp = ta.highest(high, entryLen)
+donDn = ta.lowest(low, entryLen)
+
+// RSI for momentum detection
+rsiValue = ta.rsi(close, rsiLen)
+
+// Market regime filter
+var float mktPrice = na
+var float mktMA = na
+if useMarket
+    mktPrice := request.security(marketSym, marketTF, close)
+    mktMA := request.security(marketSym, marketTF, ta.sma(close, marketLen))
+
+mktLongOK = (not useMarket) or (mktPrice > mktMA)
+mktShortOK = (not useMarket) or (mktPrice < mktMA)
+
+// Volume filter
+avgVol = ta.sma(volume, 20)
+volOK = (minVol == 0) or (avgVol >= minVol)
+
+//================ Position Tracking
+var int unitCount = 0
+var float entryPrice = na
+var int barsInPosition = 0  // KEY: Track how long we've been in position
+
+// Track bars in position
+if strategy.position_size != 0
+    barsInPosition += 1
+else
+    barsInPosition := 0
+
+//================ Position Sizing
+sharesForUnit(_e, _n) =>
+    r = _e * (riskPct / 100.0)
+    psr = math.max(stopN * _n, syminfo.mintick)
+    math.max(1, math.floor(r / psr))
+
+//================ Entry Logic
+
+// Long entry
+longEntry = allowLong and inRange and mktLongOK and volOK and (close > donUp[1])
+if longEntry and strategy.position_size == 0
+    entryPrice := close
+    qty = sharesForUnit(strategy.equity, N)
+    strategy.entry("L1", strategy.long, qty=qty, comment="L1")
+    unitCount := 1
+    barsInPosition := 0
+
+// Short entry
+shortEntry = allowShort and inRange and mktShortOK and volOK and (close < donDn[1])
+if shortEntry and strategy.position_size == 0
+    entryPrice := close
+    qty = sharesForUnit(strategy.equity, N)
+    strategy.entry("S1", strategy.short, qty=qty, comment="S1")
+    unitCount := 1
+    barsInPosition := 0
+
+//================ Pyramiding
+isLong = strategy.position_size > 0
+isShort = strategy.position_size < 0
+
+if isLong and unitCount < maxUnits
+    addPrice = entryPrice + (unitCount * addStepN * N)
+    if close >= addPrice
+        unitCount += 1
+        qty = sharesForUnit(strategy.equity, N)
+        label = "L" + str.tostring(unitCount)
+        strategy.entry(label, strategy.long, qty=qty, comment=label)
+
+if isShort and unitCount < maxUnits
+    addPrice = entryPrice - (unitCount * addStepN * N)
+    if close <= addPrice
+        unitCount += 1
+        qty = sharesForUnit(strategy.equity, N)
+        label = "S" + str.tostring(unitCount)
+        strategy.entry(label, strategy.short, qty=qty, comment=label)
+
+//================ THREE-TIERED EXIT LOGIC (KEY INNOVATION)
+
+// Calculate momentum crosses globally (must run on every bar for consistency)
+rsiCrossUnder = ta.crossunder(rsiValue, rsiMomentumFade)
+rsiCrossOver = ta.crossover(rsiValue, rsiMomentumFade)
+
+// 1. EARLY EXIT: Momentum fades (RSI crosses 50)
+momentumFadedLong = isLong and rsiCrossUnder
+momentumFadedShort = isShort and rsiCrossOver
+
+if momentumFadedLong
+    strategy.close_all(comment="Momentum Fade L")
+
+if momentumFadedShort
+    strategy.close_all(comment="Momentum Fade S")
+
+// 2. STANDARD EXIT: 40 bars reached (unless momentum exceptionally strong)
+reachedStandardTime = barsInPosition >= standardExitBars
+
+// Check if momentum is strong enough to extend beyond standard time
+strongMomentumLong = isLong and rsiValue > rsiStrongMomentum
+strongMomentumShort = isShort and rsiValue < (100 - rsiStrongMomentum)
+
+// Exit at standard time UNLESS momentum is exceptionally strong
+if reachedStandardTime and isLong and not strongMomentumLong
+    strategy.close_all(comment="Time Exit L")
+
+if reachedStandardTime and isShort and not strongMomentumShort
+    strategy.close_all(comment="Time Exit S")
+
+// 3. EXTENDED EXIT: Maximum 60 bars (forced exit regardless of momentum)
+reachedMaxTime = barsInPosition >= maxExitBars
+
+if reachedMaxTime and isLong
+    strategy.close_all(comment="Max Time L")
+
+if reachedMaxTime and isShort
+    strategy.close_all(comment="Max Time S")
+
+// Initial stop loss (only triggered if position moves against us before any exit)
+if isLong
+    stopPrice = entryPrice - (stopN * N)
+    for i = 1 to maxUnits
+        strategy.exit("Stop-L" + str.tostring(i), from_entry="L" + str.tostring(i), stop=stopPrice, comment="Stop-L")
+
+if isShort
+    stopPrice = entryPrice + (stopN * N)
+    for i = 1 to maxUnits
+        strategy.exit("Stop-S" + str.tostring(i), from_entry="S" + str.tostring(i), stop=stopPrice, comment="Stop-S")
+
+// Reset unit count when flat
+if strategy.position_size == 0
+    unitCount := 0
+    entryPrice := na
+
+//================ Plotting
+plot(plotDon ? donUp : na, "Don Upper", color=color.green, linewidth=1)
+plot(plotDon ? donDn : na, "Don Lower", color=color.red, linewidth=1)
+
+// Plot RSI momentum zones
+hline(rsiMomentumFade, "RSI Fade (50)", color=color.orange, linestyle=hline.style_dotted)
+hline(rsiStrongMomentum, "RSI Strong (65)", color=color.green, linestyle=hline.style_dotted)
+hline(100 - rsiStrongMomentum, "RSI Strong Short (35)", color=color.red, linestyle=hline.style_dotted)
+
+// Show position age on chart
+var label barsLabel = na
+if barstate.islast and showSignals and strategy.position_size != 0
+    label.delete(barsLabel)
+    barsText = "Bars: " + str.tostring(barsInPosition) + "/" + str.tostring(standardExitBars)
+    barsColor = barsInPosition >= standardExitBars ? color.orange : color.blue
+    barsLabel := label.new(bar_index, high, barsText, color=barsColor, textcolor=color.white, style=label.style_label_down)
+
+// Show momentum regime
+var label momentumLabel = na
+if barstate.islast and showSignals and strategy.position_size != 0
+    label.delete(momentumLabel)
+    momentumText = "RSI: " + str.tostring(rsiValue, "#.#")
+    momentumColor = isLong ? (rsiValue > rsiStrongMomentum ? color.green : (rsiValue < rsiMomentumFade ? color.red : color.gray)) :
+                             (rsiValue < (100 - rsiStrongMomentum) ? color.green : (rsiValue > rsiMomentumFade ? color.red : color.gray))
+    momentumLabel := label.new(bar_index, low, momentumText, color=momentumColor, textcolor=color.white, style=label.style_label_up)
+
+// Background color showing exit zones
+exitZoneColor = barsInPosition >= maxExitBars ? color.new(color.red, 85) : barsInPosition >= standardExitBars ? color.new(color.orange, 90) : color.new(color.blue, 95)
+bgcolor(exitZoneColor, title="Exit Zone: Red=Force Exit, Orange=Standard, Blue=Early")
